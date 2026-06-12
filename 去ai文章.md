@@ -557,7 +557,7 @@ If each lead in your pipeline is worth an average of $300 but costs you $200 to 
 
 Lead value is the product of average deal size, close rate, and revenue per customer. The easiest number to inflate is deal size. Sales teams love projecting big numbers, and one whale deal in the pipeline can make the average look healthier than it actually is. If you strip out the top 10% of deals and the average craters, your lead value estimate was running on outliers, not reality.
 
-Time also matters. A lead that takes 90 days to close with a long implementation cycle has a very different cash profile than one that converts in a week. Lead value estimates that ignore velocity are just snapshots that ignore the most expensive variable—how long your team spends chasing them.
+Time also matters. A lead that takes 90 days to close with a long implementation cycle has a very different cash profile than one that converts in a week. Lead value estimates that ignore velocity are just snapshots that ignore the most expensive variable—how long your team spends chasing them
 
 ---------------------------------------------------------------------------------------------------------------------------
 原标题：Pipeline Coverage Calculator: Estimate How Much Sales Pipeline You Need
