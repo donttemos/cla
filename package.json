@@ -1,0 +1,44 @@
+{
+  "name": "calcverse",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "vitest run",
+    "db:seed": "node scripts/seed-mysql.js",
+    "typecheck": "tsc --noEmit",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.40.0",
+    "lucide-react": "^1.17.0",
+    "mysql2": "^3.22.4",
+    "next": "15.5.18",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "swr": "^2.4.1",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@opennextjs/cloudflare": "^1.19.11",
+    "@tailwindcss/postcss": "^4.1.17",
+    "@types/node": "^22.15.32",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "critters": "^0.0.23",
+    "eslint": "^9.34.0",
+    "eslint-config-next": "15.5.18",
+    "tailwindcss": "^4.1.17",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.7",
+    "wrangler": "^4.96.0"
+  }
+}

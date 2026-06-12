@@ -1,0 +1,33 @@
+DISCLAIMER
+
+Last Updated: June 1, 2026
+
+The information, calculators, and tools provided by DONTTEMO Studio through the DTECALC website (the "Service") are for general informational and educational purposes only. While we strive to provide accurate and reliable tools, all utilities and outputs are provided "as is" and without warranties of any kind.
+
+1. Accuracy of Calculations
+The calculators are designed to provide estimates, conversions, and general guidance. Results may not be exact and should not be relied upon as a substitute for professional advice. Users are responsible for independently verifying all results before making decisions based on them.
+
+2. No Professional Advice
+The Service does not provide professional, financial, medical, legal, or any other advisory services. Any calculations, conversions, or AI-generated suggestions are for informational purposes only. Users should consult qualified professionals for decisions requiring expertise.
+
+3. AI-Generated Content
+Some tools utilize AI-powered models to generate text, explanations, or suggestions. These outputs may be incomplete, inaccurate, or inappropriate for specific use cases. Reliance on AI-generated content is solely at your own risk.
+
+4. External Links
+The Service may include links to third-party websites. We do not review, endorse, or guarantee the accuracy or reliability of external content. Your interactions with third-party sites are at your own risk.
+
+5. Limitation of Liability
+DONTTEMO Studio shall not be liable for any direct, indirect, incidental, special, or consequential damages arising from or related to the use of the Service. This includes, but is not limited to, errors in calculations, lost data, or reliance on information provided by our tools.
+
+6. User Responsibility
+Users agree to use calculators and tools responsibly. Any actions, decisions, or consequences resulting from the use of the Service are the sole responsibility of the user.
+
+7. Changes to Disclaimer
+We may update this Disclaimer at any time without prior notice. Continued use of the Service constitutes acceptance of any updates.
+
+8. Contact Information
+For questions or concerns regarding this Disclaimer, please contact:
+
+DONTTEMO Studio  
+Email: support@donttemo.com  
+Website: https://dtecalc.com
