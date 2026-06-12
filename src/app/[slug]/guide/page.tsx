@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getAllCalculators, getCalculatorBySlug, SITE_URL } from "@/lib/content";
+import { getAllCalculators, getCalculatorBySlug } from "@/lib/content";
 import { buildPageMetadata } from "@/lib/seo";
 import { SectionHeader, LocalizedLink as Link } from "@/components";
 

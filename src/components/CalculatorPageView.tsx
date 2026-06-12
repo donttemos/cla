@@ -1,6 +1,6 @@
 import type { Calculator } from "@/types/content";
 import { getCalculatorConfigBySlug } from "@/lib/calculator-configs";
-import { DEFAULT_LOCALE, addLocaleToPathname, getDictionary, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import {
   getBlogPostsForCalculatorSlug,
   getCategoryBySlug,
