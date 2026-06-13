@@ -23,8 +23,8 @@ export async function generateMetadata({
 export default async function LocaleBlogPage({ params }: LocalePageProps) {
   const locale = await validateLocaleParam(params);
   const dictionary = getDictionary(locale);
-  const categories = getAllCategoriesByLocale(locale);
-  const posts = getBlogPostsByLocale(locale);
+  const categories = await getAllCategoriesByLocale(locale);
+  const posts = await getBlogPostsByLocale(locale);
   const topicGroups = [
     { title: dictionary.pages.blog.financeGuides, slug: "finance" },
     { title: dictionary.pages.blog.healthGuides, slug: "health" },

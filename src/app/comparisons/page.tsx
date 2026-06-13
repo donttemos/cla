@@ -9,8 +9,8 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/comparisons",
 });
 
-export default function ComparisonsIndexPage() {
-  const comparisons = getAllComparisons();
+export default async function ComparisonsIndexPage() {
+  const comparisons = await getAllComparisons();
 
   return (
     <main className="cv-container py-12">

@@ -14,14 +14,14 @@ type CalculatorPageViewProps = {
   locale?: Locale;
 };
 
-export function CalculatorPageView({
+export async function CalculatorPageView({
   calculator,
   locale = DEFAULT_LOCALE,
 }: CalculatorPageViewProps) {
   const dict = getDictionary(locale);
-  const category = getCategoryBySlug(calculator.categorySlug);
-  const relatedCalculators = getRelatedCalculators(calculator, 3);
-  const relatedBlogPosts = getBlogPostsForCalculatorSlug(calculator.slug);
+  const category = await getCategoryBySlug(calculator.categorySlug);
+  const relatedCalculators = await getRelatedCalculators(calculator, 3);
+  const relatedBlogPosts = await getBlogPostsForCalculatorSlug(calculator.slug);
   const calculatorConfig = getCalculatorConfigBySlug(calculator.slug);
   const jsonLd = buildCalculatorJsonLd(calculator);
 

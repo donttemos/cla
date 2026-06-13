@@ -9,8 +9,9 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/changelog",
 });
 
-export default function ChangelogPage() {
-  const calculators = getAllCalculators().filter(c => c.versionHistory && c.versionHistory.length > 0);
+export default async function ChangelogPage() {
+  const allCalculators = await getAllCalculators();
+  const calculators = allCalculators.filter(c => c.versionHistory && c.versionHistory.length > 0);
   
   return (
     <main className="overflow-hidden">

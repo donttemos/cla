@@ -28,8 +28,9 @@ export default async function LocaleCalculatorsPage({
 }: LocalePageProps) {
   const locale = await validateLocaleParam(params);
   const dictionary = getDictionary(locale);
-  const calculators = getAllCalculatorsByLocale(locale);
-  const popularSearches = getFeaturedCalculatorsByLocale(locale, 5).map((calculator) => ({
+  const calculators = await getAllCalculatorsByLocale(locale);
+  const featured = await getFeaturedCalculatorsByLocale(locale, 5);
+  const popularSearches = featured.map((calculator) => ({
     label: calculator.name,
     href: `/${locale}/${calculator.slug}`,
   }));
@@ -45,8 +46,8 @@ export default async function LocaleCalculatorsPage({
         <CalculatorSearch action={`/${locale}/calculators`} popularSearches={popularSearches} />
       </div>
       <div className="cv-grid">
-        {calculators.map((calculator) => {
-          const category = getCategoryBySlugAndLocale(calculator.categorySlug, locale);
+        {await Promise.all(calculators.map(async (calculator) => {
+          const category = await getCategoryBySlugAndLocale(calculator.categorySlug, locale);
           return (
             <CalculatorCard
               key={calculator.slug}
@@ -57,7 +58,7 @@ export default async function LocaleCalculatorsPage({
               badge={calculator.featured ? dictionary.pages.calculators.popularBadge : undefined}
             />
           );
-        })}
+        }))}
       </div>
     </main>
   );

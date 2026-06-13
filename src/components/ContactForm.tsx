@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getAllCalculators } from "@/lib/content";
+import type { Calculator } from "@/types/content";
 
 type FormState = {
   name: string;
@@ -19,7 +20,12 @@ type FormErrors = {
 };
 
 export function ContactForm() {
-  const calculators = getAllCalculators();
+  const [calculators, setCalculators] = useState<readonly Calculator[]>([]);
+  
+  useEffect(() => {
+    getAllCalculators().then(setCalculators);
+  }, []);
+
   const [form, setForm] = useState<FormState>({
     name: "",
     email: "",

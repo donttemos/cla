@@ -10,13 +10,14 @@ import {
 } from "@/lib/content";
 import { getDictionary, type Locale, DEFAULT_LOCALE } from "@/lib/i18n";
 
-export function HomePageView({ locale = DEFAULT_LOCALE as Locale }: { locale?: Locale }) {
+export async function HomePageView({ locale = DEFAULT_LOCALE as Locale }: { locale?: Locale }) {
   const dict = getDictionary(locale);
-  const allCalculators = getAllCalculators();
-  const featuredCalculators = getFeaturedCalculators(10);
-  const latestCalculators = getLatestCalculators(6);
-  const featuredBlogPosts = getBlogPostsByLocale(locale).filter(post => post.published).slice(0, 6);
-  const categories = getAllCategories();
+  const allCalculators = await getAllCalculators();
+  const featuredCalculators = await getFeaturedCalculators(10);
+  const latestCalculators = await getLatestCalculators(6);
+  const allPosts = await getBlogPostsByLocale(locale);
+  const featuredBlogPosts = allPosts.filter(post => post.published).slice(0, 6);
+  const categories = await getAllCategories();
   const popularSearches = featuredCalculators.slice(0, 4).map((calculator) => ({
     label: calculator.name,
     href: `/${calculator.slug}`,
@@ -124,18 +125,21 @@ export function HomePageView({ locale = DEFAULT_LOCALE as Locale }: { locale?: L
             }
           />
           <div className="cv-grid mt-12 !grid-cols-1 md:!grid-cols-2 lg:!grid-cols-3">
-            {categories.map((category) => (
-              <CategoryCard
-                key={category.slug}
-                name={category.name}
-                description={category.description}
-                href={`/category/${category.slug}`}
-                calculatorCount={getCalculatorsByCategorySlug(category.slug).length}
-                featuredCalculators={getCalculatorsByCategorySlug(category.slug)
-                  .slice(0, 3)
-                  .map((calculator) => calculator.name)}
-              />
-            ))}
+            {await Promise.all(categories.map(async (category) => {
+              const categoryCalculators = await getCalculatorsByCategorySlug(category.slug);
+              return (
+                <CategoryCard
+                  key={category.slug}
+                  name={category.name}
+                  description={category.description}
+                  href={`/category/${category.slug}`}
+                  calculatorCount={categoryCalculators.length}
+                  featuredCalculators={categoryCalculators
+                    .slice(0, 3)
+                    .map((calculator) => calculator.name)}
+                />
+              );
+            }))}
           </div>
         </div>
       </section>

@@ -7,9 +7,10 @@ import {
   getCalculatorsByCategorySlug,
   getCategoryBySlug,
   SITE_URL,
-  blogPosts,
+  getBlogPostsByLocale,
 } from "@/lib/content";
 import { buildCategoryMetadata } from "@/lib/seo";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 
 type CategoryPageProps = {
   params: Promise<{
@@ -17,29 +18,30 @@ type CategoryPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return getAllCategories().map((category) => ({ slug: category.slug }));
+export async function generateStaticParams() {
+  const categories = await getAllCategories();
+  return categories.map((category) => ({ slug: category.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
 
   return category ? buildCategoryMetadata(category) : {};
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
 
   if (!category) {
     notFound();
   }
 
-  const calculators = getCalculatorsByCategorySlug(category.slug);
-  const relatedGuides = blogPosts.filter((post) => post.categorySlug === category.slug && post.published).slice(0, 6);
+  const calculators = await getCalculatorsByCategorySlug(category.slug);
+  const relatedGuides = (await getBlogPostsByLocale(DEFAULT_LOCALE as Locale)).filter((post) => post.categorySlug === category.slug && post.published).slice(0, 6);
 
   const jsonLd = {
     "@context": "https://schema.org",

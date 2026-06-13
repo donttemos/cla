@@ -3,14 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalculatorCard, SectionHeader } from "@/components";
 import {
-  getAllCalculators,
   getBlogPostBySlug,
   getCalculatorBySlug,
   SITE_NAME,
   SITE_URL,
-  blogPosts,
+  getBlogPostsByLocale,
 } from "@/lib/content";
 import { buildPageMetadata } from "@/lib/seo";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
+import type { Calculator } from "@/types/content";
 
 type BlogPostPageProps = {
   params: Promise<{
@@ -18,15 +19,16 @@ type BlogPostPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return blogPosts.map((post) => ({ slug: post.slug }));
+export async function generateStaticParams() {
+  const posts = await getBlogPostsByLocale(DEFAULT_LOCALE as Locale);
+  return posts.map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = getBlogPostBySlug(slug);
+  const post = await getBlogPostBySlug(slug);
 
   return post
     ? buildPageMetadata({
@@ -40,17 +42,16 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const post = getBlogPostBySlug(slug);
+  const post = await getBlogPostBySlug(slug);
 
   if (!post) {
     notFound();
   }
 
-  const relatedCalculators = post.relatedCalculatorSlugs
-    .map((calculatorSlug) => getCalculatorBySlug(calculatorSlug))
-    .filter((calculator): calculator is ReturnType<typeof getAllCalculators>[number] =>
-      Boolean(calculator),
-    );
+  const relatedCalculatorsRaw = await Promise.all(
+    post.relatedCalculatorSlugs.map((calculatorSlug) => getCalculatorBySlug(calculatorSlug))
+  );
+  const relatedCalculators = relatedCalculatorsRaw.filter((calculator): calculator is Calculator => Boolean(calculator));
   const jsonLd = [
     {
       "@context": "https://schema.org",

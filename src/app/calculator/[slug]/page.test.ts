@@ -3,9 +3,11 @@ import { getAllCalculators, SITE_URL } from "@/lib/content";
 import { generateMetadata, generateStaticParams } from "./page";
 
 describe("legacy calculator slug route", () => {
-  it("generates static params for every calculator slug", () => {
-    expect(generateStaticParams()).toEqual(
-      getAllCalculators().map((calculator) => ({ slug: calculator.slug })),
+  it("generates static params for every calculator slug", async () => {
+    const all = await getAllCalculators();
+    const params = await generateStaticParams();
+    expect(params).toEqual(
+      all.map((calculator) => ({ slug: calculator.slug })),
     );
   });
 

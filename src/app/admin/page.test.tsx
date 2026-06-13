@@ -21,7 +21,8 @@ describe("admin page", () => {
     expect(text).toContain("Create Blog");
     expect(text).toContain("Manage Categories");
     expect(text).toContain("SEO Metadata");
-    expect(text).toContain(String(getAllCalculators().length));
+    const all = await getAllCalculators();
+    expect(text).toContain(String(all.length));
     expect(text).toContain("Selected workflow");
     expect(text).not.toContain("disabled");
   });

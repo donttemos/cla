@@ -4,9 +4,11 @@ import { SUPPORTED_LOCALES } from "@/lib/i18n";
 import sitemap from "./sitemap";
 
 describe("sitemap", () => {
-  it("contains root calculator URLs and excludes legacy /calculator/ URLs", () => {
-    const urls = sitemap().map((entry) => entry.url);
-    const calculatorSlugs = getAllCalculators().map(
+  it("contains root calculator URLs and excludes legacy /calculator/ URLs", async () => {
+    const sm = await sitemap();
+    const urls = sm.map((entry) => entry.url);
+    const all = await getAllCalculators();
+    const calculatorSlugs = all.map(
       (calculator) => calculator.slug,
     );
 
@@ -22,8 +24,8 @@ describe("sitemap", () => {
     );
   });
 
-  it("emits localized calculator entries with language alternates", () => {
-    const entries = sitemap();
+  it("emits localized calculator entries with language alternates", async () => {
+    const entries = await sitemap();
     const calculatorEntries = entries.filter((entry) =>
       entry.url.endsWith("/loan-calculator"),
     );

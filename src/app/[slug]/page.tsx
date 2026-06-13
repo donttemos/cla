@@ -10,15 +10,16 @@ type CalculatorPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return getAllCalculators().map((calculator) => ({ slug: calculator.slug }));
+export async function generateStaticParams() {
+  const calculators = await getAllCalculators();
+  return calculators.map((calculator) => ({ slug: calculator.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: CalculatorPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const calculator = getCalculatorBySlug(slug);
+  const calculator = await getCalculatorBySlug(slug);
 
   if (!calculator) {
     return {};
@@ -42,7 +43,7 @@ export async function generateMetadata({
 
 export default async function CalculatorPage({ params }: CalculatorPageProps) {
   const { slug } = await params;
-  const calculator = getCalculatorBySlug(slug);
+  const calculator = await getCalculatorBySlug(slug);
 
   if (!calculator) {
     notFound();

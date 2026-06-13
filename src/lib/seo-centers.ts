@@ -120,26 +120,34 @@ export const examples: readonly ExamplePage[] = [
   }
 ];
 
-export function getAllComparisons() {
-  return comparisons;
+import { 
+  dbGetAllComparisons, 
+  dbGetComparisonBySlug,
+  dbGetAllFormulas,
+  dbGetFormulaBySlug,
+  dbGetAllExamples,
+  dbGetExampleBySlug
+} from "./db/content-db";
+
+// ... (existing comparisons, formulas, examples arrays remain for reference/seeding)
+
+export async function getAllComparisons() {
+  return dbGetAllComparisons();
+}
+export async function getComparisonBySlug(slug: string) {
+  return dbGetComparisonBySlug(slug);
 }
 
-export function getComparisonBySlug(slug: string) {
-  return comparisons.find((c) => c.slug === slug);
+export async function getAllFormulas() {
+  return dbGetAllFormulas();
+}
+export async function getFormulaBySlug(slug: string) {
+  return dbGetFormulaBySlug(slug);
 }
 
-export function getAllFormulas() {
-  return formulas;
+export async function getAllExamples() {
+  return dbGetAllExamples();
 }
-
-export function getFormulaBySlug(slug: string) {
-  return formulas.find((f) => f.slug === slug);
-}
-
-export function getAllExamples() {
-  return examples;
-}
-
-export function getExampleBySlug(slug: string) {
-  return examples.find((e) => e.slug === slug);
+export async function getExampleBySlug(slug: string) {
+  return dbGetExampleBySlug(slug);
 }

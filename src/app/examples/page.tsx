@@ -9,8 +9,8 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/examples",
 });
 
-export default function ExamplesIndexPage() {
-  const examples = getAllExamples();
+export default async function ExamplesIndexPage() {
+  const examples = await getAllExamples();
 
   return (
     <main className="cv-container py-12">

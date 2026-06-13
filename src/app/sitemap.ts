@@ -3,9 +3,10 @@ import {
   getAllCalculators,
   getAllCategories,
   SITE_URL,
-  blogPosts,
+  getBlogPostsByLocale,
 } from "@/lib/content";
 import {
+  DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
   addLocaleToPathname,
   type Locale,
@@ -25,9 +26,13 @@ const staticRoutes = [
   "/terms",
 ] as const;
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const blogPostSlugs = new Set(blogPosts.filter((post) => post.published).map((post) => post.slug));
+  const allPosts = await getBlogPostsByLocale(DEFAULT_LOCALE as Locale);
+  const blogPostSlugs = new Set(allPosts.filter((post) => post.published).map((post) => post.slug));
+  const categories = await getAllCategories();
+  const calculators = await getAllCalculators();
+
   const routes: MetadataRoute.Sitemap = [
     ...staticRoutes.flatMap((path) =>
       buildLocalizedEntries(path === "" ? "/" : path, {
@@ -36,14 +41,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
         priority: path === "" ? 1 : 0.7,
       }),
     ),
-    ...getAllCategories().flatMap((category) =>
+    ...categories.flatMap((category) =>
       buildLocalizedEntries(`/category/${category.slug}`, {
         lastModified: now,
         changeFrequency: "weekly",
         priority: 0.8,
       }),
     ),
-    ...getAllCalculators().flatMap((calculator) =>
+    ...calculators.flatMap((calculator) =>
       buildLocalizedEntries(`/${calculator.slug}`, {
         lastModified: now,
         changeFrequency: "weekly",

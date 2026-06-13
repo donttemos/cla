@@ -10,13 +10,14 @@ type Props = {
   }>;
 };
 
-export function generateStaticParams() {
-  return getAllComparisons().map((c) => ({ slug: c.slug }));
+export async function generateStaticParams() {
+  const all = await getAllComparisons();
+  return all.map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const comparison = getComparisonBySlug(slug);
+  const comparison = await getComparisonBySlug(slug);
   if (!comparison) return {};
 
   return buildPageMetadata({
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ComparisonDetailPage({ params }: Props) {
   const { slug } = await params;
-  const comparison = getComparisonBySlug(slug);
+  const comparison = await getComparisonBySlug(slug);
 
   if (!comparison) notFound();
 

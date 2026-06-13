@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SectionHeader } from "@/components";
-import { blogPosts, getAllCategories } from "@/lib/content";
+import { getAllCategories, getBlogPostsByLocale } from "@/lib/content";
 import { buildPageMetadata } from "@/lib/seo";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
+import { SectionHeader } from "@/components";
 
 export const metadata: Metadata = buildPageMetadata({
   seoTitle: "SEO Blog - Calculator Guides and Formula Explainers",
@@ -10,8 +11,9 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/blog",
 });
 
-export default function BlogPage() {
-  const categories = getAllCategories();
+export default async function BlogPage() {
+  const categories = await getAllCategories();
+  const allPosts = await getBlogPostsByLocale(DEFAULT_LOCALE as Locale);
   const topicGroups = [
     { title: "Finance Guides", slug: "finance" },
     { title: "Health Guides", slug: "health" },
@@ -29,7 +31,7 @@ export default function BlogPage() {
       />
       <div className="grid gap-8">
         {topicGroups.map((group) => {
-          const posts = blogPosts.filter((post) => post.categorySlug === group.slug);
+          const posts = allPosts.filter((post) => post.categorySlug === group.slug);
           const category = categories.find((candidate) => candidate.slug === group.slug);
 
           return posts.length > 0 ? (

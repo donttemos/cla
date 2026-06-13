@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { generateStaticParams as generateBlogPostStaticParams } from "../../../../blog/[slug]/page";
 import { CalculatorCard, SectionHeader } from "@/components";
 import {
-  getAllCalculators,
   getBlogPostBySlugAndLocale,
   getCalculatorBySlugAndLocale,
   SITE_NAME,
@@ -17,6 +16,7 @@ import {
   validateLocale,
   type LocaleSlugPageProps,
 } from "../../_locale";
+import type { Calculator } from "@/types/content";
 
 export async function generateStaticParams() {
   const locales = generateLocaleStaticParams();
@@ -32,7 +32,7 @@ export async function generateMetadata({
 }: LocaleSlugPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
   const validLocale = validateLocale(locale);
-  const post = getBlogPostBySlugAndLocale(slug, validLocale);
+  const post = await getBlogPostBySlugAndLocale(slug, validLocale);
 
   return post
     ? buildPageMetadata({
@@ -51,17 +51,17 @@ export default async function LocaleBlogPostPage({
   const { locale, slug } = await params;
   const validLocale = validateLocale(locale);
   const dictionary = getDictionary(validLocale);
-  const post = getBlogPostBySlugAndLocale(slug, validLocale);
+  const post = await getBlogPostBySlugAndLocale(slug, validLocale);
 
   if (!post) {
     notFound();
   }
 
-  const relatedCalculators = post.relatedCalculatorSlugs
-    .map((calculatorSlug) => getCalculatorBySlugAndLocale(calculatorSlug, validLocale))
-    .filter((calculator): calculator is ReturnType<typeof getAllCalculators>[number] =>
-      Boolean(calculator),
-    );
+  const relatedCalculatorsRaw = await Promise.all(
+    post.relatedCalculatorSlugs.map((calculatorSlug) => getCalculatorBySlugAndLocale(calculatorSlug, validLocale))
+  );
+  const relatedCalculators = relatedCalculatorsRaw.filter((calculator): calculator is Calculator => Boolean(calculator));
+  
   const jsonLd = [
     {
       "@context": "https://schema.org",

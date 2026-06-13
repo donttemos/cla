@@ -9,9 +9,10 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/calculators",
 });
 
-export default function CalculatorsPage() {
-  const calculators = getAllCalculators();
-  const popularSearches = getFeaturedCalculators(5).map((calculator) => ({
+export default async function CalculatorsPage() {
+  const calculators = await getAllCalculators();
+  const featured = await getFeaturedCalculators(5);
+  const popularSearches = featured.map((calculator) => ({
     label: calculator.name,
     href: `/${calculator.slug}`,
   }));
@@ -27,8 +28,8 @@ export default function CalculatorsPage() {
         <CalculatorSearch popularSearches={popularSearches} />
       </div>
       <div className="cv-grid">
-        {calculators.map((calculator) => {
-          const category = getCategoryBySlug(calculator.categorySlug);
+        {await Promise.all(calculators.map(async (calculator) => {
+          const category = await getCategoryBySlug(calculator.categorySlug);
           return (
             <CalculatorCard
               key={calculator.slug}
@@ -39,7 +40,7 @@ export default function CalculatorsPage() {
               badge={calculator.featured ? "Popular" : undefined}
             />
           );
-        })}
+        }))}
       </div>
     </main>
   );

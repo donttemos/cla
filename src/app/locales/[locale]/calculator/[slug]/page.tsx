@@ -25,7 +25,7 @@ export async function generateMetadata({
 }: LocaleSlugPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
   const validLocale = validateLocale(locale);
-  const calculator = getCalculatorBySlug(slug);
+  const calculator = await getCalculatorBySlug(slug);
 
   return calculator ? buildCalculatorMetadata(calculator, validLocale) : {};
 }

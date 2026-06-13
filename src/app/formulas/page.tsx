@@ -9,8 +9,8 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/formulas",
 });
 
-export default function FormulasIndexPage() {
-  const formulas = getAllFormulas();
+export default async function FormulasIndexPage() {
+  const formulas = await getAllFormulas();
 
   return (
     <main className="cv-container py-12">

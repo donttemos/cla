@@ -9,9 +9,10 @@ import {
 
 export const dynamic = "force-static";
 
-export function GET() {
-  const categories = getAllCategories();
-  const calculators = getAllCalculators();
+export async function GET() {
+  const categories = await getAllCategories();
+  const calculators = await getAllCalculators();
+  const featured = await getFeaturedCalculators(12);
 
   return Response.json({
     site: {
@@ -30,7 +31,7 @@ export function GET() {
         (calculator) => calculator.categorySlug === category.slug,
       ).length,
     })),
-    popularPages: getFeaturedCalculators(12).map((calculator) => ({
+    popularPages: featured.map((calculator) => ({
       name: calculator.name,
       slug: calculator.slug,
       url: `${SITE_URL}/${calculator.slug}`,

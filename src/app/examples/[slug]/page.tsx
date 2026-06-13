@@ -10,13 +10,14 @@ type Props = {
   }>;
 };
 
-export function generateStaticParams() {
-  return getAllExamples().map((e) => ({ slug: e.slug }));
+export async function generateStaticParams() {
+  const all = await getAllExamples();
+  return all.map((e) => ({ slug: e.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const example = getExampleBySlug(slug);
+  const example = await getExampleBySlug(slug);
   if (!example) return {};
 
   return buildPageMetadata({
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ExampleDetailPage({ params }: Props) {
   const { slug } = await params;
-  const example = getExampleBySlug(slug);
+  const example = await getExampleBySlug(slug);
 
   if (!example) notFound();
 

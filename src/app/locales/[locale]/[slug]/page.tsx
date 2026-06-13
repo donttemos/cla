@@ -24,7 +24,7 @@ export async function generateMetadata({
 }: LocaleSlugPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
   const validLocale = validateLocale(locale);
-  const calculator = getCalculatorBySlugAndLocale(slug, validLocale);
+  const calculator = await getCalculatorBySlugAndLocale(slug, validLocale);
 
   if (!calculator) {
     return {};
@@ -38,7 +38,7 @@ export default async function LocaleCalculatorPage({
 }: LocaleSlugPageProps) {
   const { locale, slug } = await params;
   const validLocale = validateLocale(locale);
-  const calculator = getCalculatorBySlugAndLocale(slug, validLocale);
+  const calculator = await getCalculatorBySlugAndLocale(slug, validLocale);
 
   if (!calculator) {
     notFound();

@@ -10,13 +10,14 @@ type Props = {
   }>;
 };
 
-export function generateStaticParams() {
-  return getAllFormulas().map((f) => ({ slug: f.slug }));
+export async function generateStaticParams() {
+  const all = await getAllFormulas();
+  return all.map((f) => ({ slug: f.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const formula = getFormulaBySlug(slug);
+  const formula = await getFormulaBySlug(slug);
   if (!formula) return {};
 
   return buildPageMetadata({
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function FormulaDetailPage({ params }: Props) {
   const { slug } = await params;
-  const formula = getFormulaBySlug(slug);
+  const formula = await getFormulaBySlug(slug);
 
   if (!formula) notFound();
 

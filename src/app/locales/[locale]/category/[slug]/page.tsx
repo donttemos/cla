@@ -28,7 +28,7 @@ export async function generateMetadata({
 }: LocaleSlugPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
   const validLocale = validateLocale(locale);
-  const category = getCategoryBySlugAndLocale(slug, validLocale);
+  const category = await getCategoryBySlugAndLocale(slug, validLocale);
 
   return category ? buildLocalizedCategoryMetadata(category, validLocale) : {};
 }
@@ -39,13 +39,13 @@ export default async function LocaleCategoryPage({
   const { locale, slug } = await params;
   const validLocale = validateLocale(locale);
   const dictionary = getDictionary(validLocale);
-  const category = getCategoryBySlugAndLocale(slug, validLocale);
+  const category = await getCategoryBySlugAndLocale(slug, validLocale);
 
   if (!category) {
     notFound();
   }
 
-  const calculators = getCalculatorsByCategorySlugAndLocale(category.slug, validLocale);
+  const calculators = await getCalculatorsByCategorySlugAndLocale(category.slug, validLocale);
 
   return (
     <main className="cv-container py-12">
