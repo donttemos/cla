@@ -1,15 +1,82 @@
-import { neon } from '@neondatabase/serverless';
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
-export const sql = process.env.DATABASE_URL
-  ? neon(process.env.DATABASE_URL)
-  : null;
+type RuntimeEnvironment = Record<string, string | undefined>;
 
-export function isPostgresConfigured(): boolean {
-  return Boolean(process.env.DATABASE_URL);
+type CloudflareEnvironment = RuntimeEnvironment;
+
+let configuredEnvironment: RuntimeEnvironment | undefined;
+
+declare const process:
+  | {
+      env?: RuntimeEnvironment;
+    }
+  | undefined;
+
+declare global {
+  var __POSTGRES_ENV__: RuntimeEnvironment | undefined;
 }
 
+export function configurePostgresEnvironment(env: RuntimeEnvironment): void {
+  configuredEnvironment = env;
+}
+
+function readRuntimeEnvironment(): RuntimeEnvironment {
+  if (configuredEnvironment) {
+    return configuredEnvironment;
+  }
+
+  if (globalThis.__POSTGRES_ENV__) {
+    return globalThis.__POSTGRES_ENV__;
+  }
+
+  try {
+    const context = getCloudflareContext({ async: false });
+    return context.env as CloudflareEnvironment;
+  } catch {
+    // Ignore and continue to Node-style env lookup.
+  }
+
+  if (typeof process !== "undefined" && process.env) {
+    return process.env;
+  }
+
+  return {};
+}
+
+function getDatabaseUrl(): string | undefined {
+  return readRuntimeEnvironment().DATABASE_URL;
+}
+
+export function isPostgresConfigured(): boolean {
+  return Boolean(getDatabaseUrl());
+}
+
+function createSqlClient(): NeonQueryFunction<boolean, boolean> {
+  const databaseUrl = getDatabaseUrl();
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is not configured.");
+  }
+
+  return neon(databaseUrl);
+}
+
+type SqlTag = ((...args: Parameters<NeonQueryFunction<boolean, boolean>>) => ReturnType<NeonQueryFunction<boolean, boolean>>) &
+  Pick<NeonQueryFunction<boolean, boolean>, "query" | "unsafe" | "transaction">;
+
+const sqlTag = ((...args: Parameters<NeonQueryFunction<boolean, boolean>>) => {
+  const client = createSqlClient();
+  return client(...args);
+}) as SqlTag;
+
+sqlTag.query = (...args) => createSqlClient().query(...args);
+sqlTag.unsafe = (...args) => createSqlClient().unsafe(...args);
+sqlTag.transaction = (...args) => createSqlClient().transaction(...args);
+
+export const sql = sqlTag;
+
 export async function pingPostgres(): Promise<{ ok: true }> {
-  if (!sql) {
+  if (!isPostgresConfigured()) {
     throw new Error("DATABASE_URL is not configured.");
   }
 
