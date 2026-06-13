@@ -1,10 +1,8 @@
 import { neon } from '@neondatabase/serverless';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is required');
-}
-
-export const sql = neon(process.env.DATABASE_URL);
+export const sql = process.env.DATABASE_URL
+  ? neon(process.env.DATABASE_URL)
+  : null;
 
 /**
  * Utility to convert PostgreSQL snake_case rows to TypeScript camelCase objects.
