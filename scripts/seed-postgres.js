@@ -25,7 +25,27 @@ function loadEnv() {
   }
 }
 
+function resolveTsPath(importPath) {
+  if (importPath.startsWith("@/")) {
+    const relPath = importPath.replace("@/", "src/");
+    const fullPath = path.join(rootDir, relPath);
+    
+    const extensions = [".ts", ".tsx", "/index.ts", "/index.tsx"];
+    for (const ext of extensions) {
+      if (fs.existsSync(fullPath + ext)) return fullPath + ext;
+      if (ext.startsWith("/") && fs.existsSync(fullPath + ext)) return fullPath + ext;
+    }
+  }
+  return null;
+}
+
+const loadedModules = new Map();
+
 function loadTsModule(filePath) {
+  if (loadedModules.has(filePath)) {
+    return loadedModules.get(filePath);
+  }
+
   const source = fs.readFileSync(filePath, "utf8");
   const output = ts.transpileModule(source, {
     compilerOptions: {
@@ -37,18 +57,34 @@ function loadTsModule(filePath) {
   }).outputText;
 
   const m = { exports: {} };
+  loadedModules.set(filePath, m.exports); // Prevent circular loops
+
   const context = vm.createContext({
     exports: m.exports,
     module: m,
     require: (name) => {
-      if (name.startsWith("@/")) {
-        const relPath = name.replace("@/", "src/");
-        return loadTsModule(path.join(rootDir, relPath));
+      const tsPath = resolveTsPath(name);
+      if (tsPath) {
+        return loadTsModule(tsPath);
       }
-      return require(name);
+      try {
+        return require(name);
+      } catch (e) {
+        // Fallback for relative imports within the context
+        const dir = path.dirname(filePath);
+        const relTsPath = path.resolve(dir, name);
+        const extensions = [".ts", ".tsx", "/index.ts", "/index.tsx"];
+        for (const ext of extensions) {
+          const p = relTsPath + (ext.startsWith("/") ? "" : "") + ext;
+          if (fs.existsSync(p)) return loadTsModule(p);
+        }
+        throw e;
+      }
     },
     console,
     process,
+    __dirname: path.dirname(filePath),
+    __filename: filePath,
   });
   
   try {
@@ -70,14 +106,10 @@ async function seed() {
 
   const sql = neon(process.env.DATABASE_URL);
 
-  // --- NEW: Automatically create tables ---
   console.log("Checking database schema...");
   const schemaPath = path.join(rootDir, "docs", "postgres-schema.sql");
   if (fs.existsSync(schemaPath)) {
     const schemaSql = fs.readFileSync(schemaPath, "utf8");
-    // Split by semicolon to execute one by one if needed, 
-    // but neon() can often handle multiple statements if they are standard.
-    // For safety with large schemas, we split by common SQL blocks.
     const statements = schemaSql.split(";").filter(s => s.trim().length > 0);
     for (const statement of statements) {
       await sql(statement);
@@ -85,12 +117,18 @@ async function seed() {
     console.log("Schema verified/updated.");
   }
   
-  console.log("Loading static content...");
-  const content = loadTsModule(path.join(rootDir, "src", "lib", "data-seed.ts"));
+  console.log("Loading content from data-seed.ts...");
+  const dataSeedPath = path.join(rootDir, "src", "lib", "data-seed.ts");
+  if (!fs.existsSync(dataSeedPath)) {
+    console.error("Critical Error: src/lib/data-seed.ts not found. Ensure backup was created.");
+    process.exit(1);
+  }
+
+  const content = loadTsModule(dataSeedPath);
   const seoCenters = loadTsModule(path.join(rootDir, "src", "lib", "seo-centers.ts"));
 
   const categories = content.categories || [];
-  const calculators = content.getAllCalculators ? content.getAllCalculators() : [];
+  const calculators = content.calculators || [];
   const blogPosts = content.blogPosts || [];
   
   const comparisons = seoCenters.comparisons || [];
@@ -238,6 +276,7 @@ async function seed() {
     console.log("Seeding completed successfully!");
   } catch (error) {
     console.error("Seeding failed:", error);
+    process.exit(1);
   }
 }
 
