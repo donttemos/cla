@@ -1,425 +1,618 @@
-﻿// Content and SEO types
 import type {
   BlogPost,
+  BlogPostSection,
+  BlogPostSlug,
   Calculator,
+  CalculatorSlug,
   Category,
+  CategorySlug,
   FaqItem,
+  VersionHistoryItem,
 } from "@/types/content";
-import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
-import type {
-  ContentTranslations,
-} from "@/lib/i18n/content/types";
-import { spanishContentTranslations } from "@/lib/i18n/content/es";
-import { indonesianContentTranslations } from "@/lib/i18n/content/id";
-import { portugueseBrazilContentTranslations } from "@/lib/i18n/content/pt-BR";
+import { calculatorConfigs } from "@/lib/calculator-configs";
 import { simplifiedChineseContentTranslations } from "@/lib/i18n/content/zh-CN";
-import { traditionalChineseContentTranslations } from "@/lib/i18n/content/zh-TW";
 
-export const SITE_NAME = "DTECALC";
-export const SITE_TAGLINE = "500+ Free Online Calculators";
-export const SITE_URL = "https://calcverse.donttemo.top";
-
-import { 
-  dbGetAllCategories, 
-  dbGetCategoryBySlug, 
-  dbGetAllCalculators, 
-  dbGetCalculatorBySlug, 
-  dbGetCalculatorsByCategorySlug,
-  dbGetFeaturedCalculators,
-  dbGetLatestCalculators,
-  dbGetAllBlogPosts,
-  dbGetBlogPostBySlug,
-} from "../src/lib/db/content-db";
-
-const contentTranslations: Record<Locale, ContentTranslations> = {
-  en: { categories: {}, calculators: {}, blogPosts: {} },
-  es: spanishContentTranslations,
-  id: indonesianContentTranslations,
-  "pt-BR": portugueseBrazilContentTranslations,
-  "zh-CN": simplifiedChineseContentTranslations,
-  "zh-TW": traditionalChineseContentTranslations,
+const CATEGORY_METADATA: Record<CategorySlug, Omit<Category, "id" | "slug">> = {
+  finance: {
+    name: "Finance",
+    description:
+      "Estimate loans, mortgages, returns, retirement savings, taxes, and everyday money decisions.",
+    icon: "landmark",
+    seoTitle: "Finance Calculators - Loans, Interest, ROI, Tax, and Retirement",
+    seoDescription:
+      "Use free finance calculators for loans, mortgages, compound interest, ROI, salary, tax, and retirement planning.",
+  },
+  health: {
+    name: "Health",
+    description:
+      "Check BMI, BMR, calorie needs, body fat, hydration, and practical wellness numbers.",
+    icon: "heart-pulse",
+    seoTitle: "Health Calculators - BMI, BMR, Calories, Body Fat, and Water",
+    seoDescription:
+      "Use free health calculators for BMI, BMR, calories, hydration, and body composition planning.",
+  },
+  "date-time": {
+    name: "Date & Time",
+    description:
+      "Calculate age, day differences, durations, and week ranges for planning and scheduling.",
+    icon: "calendar-range",
+    seoTitle: "Date and Time Calculators - Age, Days, Duration, and Weeks",
+    seoDescription:
+      "Use free date and time calculators for age, days between dates, time duration, and week planning.",
+  },
+  math: {
+    name: "Math",
+    description:
+      "Solve percentages, fractions, GPA, averages, and other common arithmetic tasks.",
+    icon: "sigma",
+    seoTitle: "Math Calculators - Percentage, Fraction, GPA, and Average",
+    seoDescription:
+      "Use free math calculators for percentages, fractions, GPA, averages, and daily arithmetic checks.",
+  },
+  conversion: {
+    name: "Conversion",
+    description:
+      "Convert weight, length, distance, and temperature values quickly and clearly.",
+    icon: "ruler",
+    seoTitle: "Conversion Calculators - Weight, Length, Distance, and Temperature",
+    seoDescription:
+      "Use free unit conversion calculators for kg to lbs, cm to inches, miles to km, and Celsius to Fahrenheit.",
+  },
+  business: {
+    name: "Business",
+    description:
+      "Model revenue, profit, break-even, CAC, and LTV for practical business decisions.",
+    icon: "briefcase-business",
+    seoTitle: "Business Calculators - Profit, Revenue, Break-Even, CAC, and LTV",
+    seoDescription:
+      "Use free business calculators for profit, revenue, break-even analysis, customer acquisition cost, and lifetime value.",
+  },
+  ai: {
+    name: "AI",
+    description:
+      "Estimate token spend, API usage, AI pricing, model costs, and GPU training budgets.",
+    icon: "bot",
+    seoTitle: "AI Cost Calculators - Tokens, API Spend, LLMs, and GPU Costs",
+    seoDescription:
+      "Use free AI calculators for OpenAI cost, Claude token usage, LLM pricing, GPU training cost, and AI product pricing.",
+  },
 };
 
-function translateCategory(category: Category, locale: Locale): Category {
-  const translation = contentTranslations[locale]?.categories?.[category.slug];
+const CALCULATOR_CATEGORY_MAP: Record<CalculatorSlug, CategorySlug> = {
+  "loan-calculator": "finance",
+  "mortgage-calculator": "finance",
+  "car-loan-calculator": "finance",
+  "interest-calculator": "finance",
+  "compound-interest-calculator": "finance",
+  "investment-calculator": "finance",
+  "roi-calculator": "finance",
+  "retirement-calculator": "finance",
+  "salary-calculator": "finance",
+  "tax-calculator": "finance",
+  "bmi-calculator": "health",
+  "bmr-calculator": "health",
+  "calories-calculator": "health",
+  "body-fat-calculator": "health",
+  "water-intake-calculator": "health",
+  "age-calculator": "date-time",
+  "days-between-dates": "date-time",
+  "time-duration-calculator": "date-time",
+  "week-calculator": "date-time",
+  "percentage-calculator": "math",
+  "fraction-calculator": "math",
+  "gpa-calculator": "math",
+  "average-calculator": "math",
+  "kg-to-lbs": "conversion",
+  "cm-to-inches": "conversion",
+  "miles-to-km": "conversion",
+  "celsius-to-fahrenheit": "conversion",
+  "profit-calculator": "business",
+  "revenue-calculator": "business",
+  "break-even-calculator": "business",
+  "cac-calculator": "business",
+  "ltv-calculator": "business",
+  "openai-cost-calculator": "ai",
+  "claude-token-calculator": "ai",
+  "llm-cost-calculator": "ai",
+  "gpu-training-cost-calculator": "ai",
+  "ai-pricing-calculator": "ai",
+};
 
-  return translation
-    ? {
-        ...category,
-        name: translation.name ?? category.name,
-        description: translation.description ?? category.description,
-      }
-    : category;
-}
+const CALCULATOR_FORMULA_MAP: Partial<Record<CalculatorSlug, string>> = {
+  "loan-calculator":
+    "Payment = P * (r / 12) / (1 - (1 + r / 12)^(-12t))",
+  "mortgage-calculator":
+    "Payment = P * (r / 12) / (1 - (1 + r / 12)^(-12t))",
+  "car-loan-calculator":
+    "Payment = P * (r / 12) / (1 - (1 + r / 12)^(-12t))",
+  "interest-calculator": "Interest = Principal * Rate * Time",
+  "compound-interest-calculator": "A = P(1 + r / n)^(nt)",
+  "investment-calculator": "Future Value = Present Value * (1 + r)^t",
+  "roi-calculator": "ROI = (Gain - Cost) / Cost * 100",
+  "retirement-calculator":
+    "Projected Balance = Current Savings + Contributions + Compound Growth",
+  "salary-calculator": "Equivalent Pay = Base Pay / Time Unit",
+  "tax-calculator": "After-Tax Income = Income - Tax Owed",
+  "bmi-calculator": "BMI = weight(kg) / height(m)^2",
+  "bmr-calculator":
+    "BMR ~= energy formula based on age, sex, height, and weight",
+  "calories-calculator": "TDEE = BMR * Activity Multiplier",
+  "body-fat-calculator":
+    "Body Fat % ~= measurement-based estimation formula",
+  "water-intake-calculator":
+    "Daily Water ~= body weight and activity adjustment",
+  "age-calculator": "Age = difference between birth date and target date",
+  "days-between-dates":
+    "Days Between = end date - start date in calendar days",
+  "time-duration-calculator":
+    "Duration = end timestamp - start timestamp",
+  "week-calculator": "Week Number = ISO week calculation",
+  "percentage-calculator": "Percentage = Part / Whole * 100",
+  "fraction-calculator":
+    "Fraction result = arithmetic operation with simplification",
+  "gpa-calculator":
+    "GPA = sum(grade points * credits) / sum(credits)",
+  "average-calculator": "Average = sum(values) / count(values)",
+  "kg-to-lbs": "lb = kg * 2.20462",
+  "cm-to-inches": "in = cm / 2.54",
+  "miles-to-km": "km = miles * 1.60934",
+  "celsius-to-fahrenheit": "F = C * 9 / 5 + 32",
+  "profit-calculator": "Profit = Revenue - Cost",
+  "revenue-calculator": "Revenue = Price * Quantity",
+  "break-even-calculator":
+    "Break-Even Units = Fixed Cost / (Price - Variable Cost)",
+  "cac-calculator":
+    "CAC = Sales and Marketing Spend / New Customers Acquired",
+  "ltv-calculator":
+    "LTV = Average Revenue * Gross Margin * Customer Lifespan",
+  "openai-cost-calculator":
+    "Cost = ((Input Tokens * Input Rate) + (Output Tokens * Output Rate)) / 1,000,000",
+  "claude-token-calculator":
+    "Cost = ((Input Tokens * Input Rate) + (Output Tokens * Output Rate)) / 1,000,000",
+  "llm-cost-calculator":
+    "Cost = requests * ((input tokens * input rate) + (output tokens * output rate))",
+  "gpu-training-cost-calculator":
+    "Training Cost = GPU Hourly Rate * Hours * GPU Count * Utilization",
+  "ai-pricing-calculator":
+    "Price = Cost Per User / (1 - Gross Margin - Payment Fee)",
+};
 
-function translateCalculator(calculator: Calculator, locale: Locale): Calculator {
-  const translation = contentTranslations[locale]?.calculators?.[calculator.slug];
-  const categoryName = (calculator as unknown as Record<string, unknown>).categoryName as string || "online";
+const BLOG_CALCULATOR_RULES: readonly {
+  readonly match: readonly string[];
+  readonly calculators: readonly CalculatorSlug[];
+}[] = [
+  { match: ["bmi"], calculators: ["bmi-calculator"] },
+  { match: ["bmr", "mifflin", "harris-benedict"], calculators: ["bmr-calculator"] },
+  { match: ["body-fat"], calculators: ["body-fat-calculator"] },
+  { match: ["water-intake", "hydration"], calculators: ["water-intake-calculator"] },
+  { match: ["calorie", "tdee", "maintenance-calories"], calculators: ["calories-calculator"] },
+  { match: ["macro", "protein"], calculators: ["calories-calculator", "bmr-calculator"] },
+  { match: ["healthy-weight", "ideal-weight", "weight-loss"], calculators: ["bmi-calculator", "calories-calculator"] },
+  { match: ["mortgage"], calculators: ["mortgage-calculator", "loan-calculator"] },
+  { match: ["car-loan"], calculators: ["car-loan-calculator", "loan-calculator"] },
+  { match: ["loan"], calculators: ["loan-calculator"] },
+  { match: ["apr", "apy", "simple-interest"], calculators: ["interest-calculator", "loan-calculator"] },
+  {
+    match: ["compound-interest", "annual-percentage-yield"],
+    calculators: ["compound-interest-calculator", "interest-calculator"],
+  },
+  { match: ["investment-return", "savings-goal"], calculators: ["investment-calculator"] },
+  { match: ["retirement", "withdrawal"], calculators: ["retirement-calculator"] },
+  { match: ["tax-rate", "tax-reserve"], calculators: ["tax-calculator"] },
+  { match: ["salary-to-hourly", "freelancer-hourly-rate"], calculators: ["salary-calculator"] },
+  { match: ["debt-to-income"], calculators: ["loan-calculator", "mortgage-calculator"] },
+  { match: ["roi", "roas"], calculators: ["roi-calculator"] },
+  { match: ["revenue-growth", "lead-value", "pipeline-coverage"], calculators: ["revenue-calculator"] },
+  {
+    match: ["profit-margin", "churn-impact", "invoice-late-fee", "subscription-burn"],
+    calculators: ["profit-calculator", "revenue-calculator"],
+  },
+  {
+    match: ["break-even", "cash-conversion-cycle", "burn-rate", "business-runway"],
+    calculators: ["break-even-calculator", "profit-calculator"],
+  },
+  {
+    match: ["conversion-rate", "checkout-conversion", "trial-to-paid", "activation-rate", "referral-conversion-rate", "email-conversion-rate", "form-completion-rate", "funnel-conversion", "landing-page-lift", "cpc-to-cpa", "cpa-calculator", "cpl-calculator"],
+    calculators: ["cac-calculator", "revenue-calculator"],
+  },
+  {
+    match: ["cac", "customer-acquisition-cost", "payback"],
+    calculators: ["cac-calculator", "ltv-calculator"],
+  },
+  {
+    match: ["ltv", "customer-ltv"],
+    calculators: ["ltv-calculator", "cac-calculator"],
+  },
+  { match: ["openai"], calculators: ["openai-cost-calculator", "llm-cost-calculator"] },
+  { match: ["claude", "token"], calculators: ["claude-token-calculator", "llm-cost-calculator"] },
+  { match: ["llm", "routing"], calculators: ["llm-cost-calculator", "ai-pricing-calculator"] },
+  { match: ["gpu", "fine-tuning"], calculators: ["gpu-training-cost-calculator", "llm-cost-calculator"] },
+  {
+    match: ["ai-pricing", "app-margin"],
+    calculators: ["ai-pricing-calculator", "llm-cost-calculator"],
+  },
+  {
+    match: ["rag", "embedding", "image-generation", "translation-cost", "agent-cost", "customer-support-cost", "sales-email-cost", "meeting-notes-cost", "batch-processing", "cached-token", "multimodal", "evaluation"],
+    calculators: ["llm-cost-calculator", "openai-cost-calculator", "ai-pricing-calculator"],
+  },
+];
 
-  const localizedDefaults = buildLocalizedCalculatorDefaults(
-    calculator,
-    categoryName,
-    locale,
-  );
+const CATEGORY_BLOG_FALLBACK: Record<CategorySlug, readonly CalculatorSlug[]> = {
+  finance: ["loan-calculator", "compound-interest-calculator"],
+  health: ["bmi-calculator", "calories-calculator"],
+  "date-time": ["age-calculator", "time-duration-calculator"],
+  math: ["percentage-calculator", "average-calculator"],
+  conversion: ["kg-to-lbs", "cm-to-inches"],
+  business: ["profit-calculator", "cac-calculator"],
+  ai: ["llm-cost-calculator", "ai-pricing-calculator"],
+};
+
+const ACRONYM_WORDS = new Set([
+  "ai",
+  "api",
+  "apr",
+  "apy",
+  "bmi",
+  "bmr",
+  "cac",
+  "cpa",
+  "cpc",
+  "cpl",
+  "ctr",
+  "gpu",
+  "gpa",
+  "llm",
+  "ltv",
+  "rag",
+  "roas",
+  "roi",
+  "saas",
+  "tdee",
+]);
+
+const DEFAULT_VERSION_HISTORY: readonly VersionHistoryItem[] = [
+  {
+    version: "1.0.0",
+    date: "2026-06-13",
+    changes: "Initial seeded content and metadata for production deployment.",
+  },
+];
+
+const blogSlugs = Object.keys(
+  simplifiedChineseContentTranslations.blogPosts ?? {},
+) as BlogPostSlug[];
+
+export const categories: readonly Category[] = (
+  Object.entries(CATEGORY_METADATA) as readonly [CategorySlug, Omit<Category, "id" | "slug">][]
+).map(([slug, metadata]) => ({
+  id: slug,
+  slug,
+  ...metadata,
+}));
+
+export const calculators: readonly Calculator[] = calculatorConfigs.map((config) => {
+  const slug = config.slug as CalculatorSlug;
+  const categorySlug = CALCULATOR_CATEGORY_MAP[slug];
+  const categoryName = CATEGORY_METADATA[categorySlug].name;
+  const relatedCalculatorSlugs = buildRelatedCalculatorSlugs(slug, categorySlug);
 
   return {
-    ...calculator,
-    name: translation?.name ?? calculator.name,
-    description: translation?.description ?? calculator.description,
-    contentSummary:
-      translation?.contentSummary ?? localizedDefaults.contentSummary,
-    whatIs: translation?.whatIs ?? localizedDefaults.whatIs,
-    formulaExplanation:
-      translation?.formulaExplanation ?? localizedDefaults.formulaExplanation,
-    howToSteps: translation?.howToSteps ?? localizedDefaults.howToSteps,
-    example: translation?.example ?? localizedDefaults.example,
-    useCases: translation?.useCases ?? localizedDefaults.useCases,
-    faq: translation?.faq ?? localizedDefaults.faq,
+    id: slug,
+    slug,
+    categorySlug,
+    name: config.title,
+    description:
+      config.description ??
+      `Use the ${config.title} to estimate results for common ${categoryName.toLowerCase()} scenarios.`,
+    formula:
+      CALCULATOR_FORMULA_MAP[slug] ??
+      `Use the ${config.title} inputs and calculation logic to produce the final result.`,
+    contentSummary: `${config.title} helps you ${toSentenceFragment(
+      config.description ??
+        `estimate common ${categoryName.toLowerCase()} outcomes with clear inputs and outputs`,
+    )}.`,
+    whatIs: `${config.title} is a free ${categoryName.toLowerCase()} tool for fast, transparent estimates. It combines the calculator widget with formula notes, examples, and FAQs so users can both get an answer and understand what is driving it.`,
+    formulaExplanation: `This tool uses the following working formula or method: ${
+      CALCULATOR_FORMULA_MAP[slug] ??
+      "calculator-specific inputs processed through the configured calculation logic"
+    }. Use the result together with your assumptions, units, rates, and time period because small input changes can materially affect the output.`,
+    howToSteps: [
+      "Enter the required values into the calculator fields.",
+      "Check that units, rates, dates, or amounts match your real scenario.",
+      "Review the calculated result and compare it with at least one alternative scenario.",
+      `Use the supporting explanation to understand how the ${categoryName.toLowerCase()} estimate was produced.`,
+    ],
+    example: `For example, you can use ${config.title} with one realistic set of inputs first, then adjust the biggest variables to compare best-case, expected, and cautious scenarios before making a decision.`,
+    useCases: [
+      `Estimate a ${categoryName.toLowerCase()} outcome before committing to a plan.`,
+      "Compare multiple scenarios with different assumptions.",
+      "Understand the key variables behind the final result instead of treating the output like a black box.",
+    ],
+    faq: buildCalculatorFaq(config.title, categoryName),
+    featured: isFeaturedCalculator(slug),
+    relatedCalculatorSlugs,
+    relatedBlogPostSlugs: [],
+    seoTitle: `${config.title} - Free Online Calculator`,
+    seoDescription:
+      config.description ??
+      `Use the free ${config.title} to estimate ${categoryName.toLowerCase()} results online.`,
+    lastUpdated: "2026-06-13",
+    reviewedBy: "DTECALC Editorial Team",
+    calculationMethod: buildCalculationMethod(config.title, categoryName),
+    versionHistory: DEFAULT_VERSION_HISTORY,
   };
+});
+
+export const blogPosts: readonly BlogPost[] = blogSlugs.map((slug) => {
+  const relatedCalculatorSlugs = inferRelatedCalculatorsForBlog(slug);
+  const categorySlug = inferCategoryForBlog(slug, relatedCalculatorSlugs);
+  const title = slugToTitle(slug);
+  const sections = buildBlogSections(title, slug, categorySlug);
+
+  return {
+    id: slug,
+    slug,
+    title,
+    excerpt: `Learn the key idea behind ${title.toLowerCase()}, how to interpret the number responsibly, and which calculator can help you model real scenarios.`,
+    published: true,
+    categorySlug,
+    relatedCalculatorSlugs,
+    sections,
+    seoTitle: `${title} - Guide, Examples, and Calculator`,
+    seoDescription: `Read a practical guide to ${title.toLowerCase()}, including examples, assumptions, and related calculators for deeper analysis.`,
+  };
+});
+
+const relatedBlogPostSlugsByCalculator = buildRelatedBlogPostSlugsByCalculator(
+  blogPosts,
+);
+
+for (const calculator of calculators as Calculator[]) {
+  calculator.relatedBlogPostSlugs = relatedBlogPostSlugsByCalculator[calculator.slug] ?? [];
 }
 
-function buildLocalizedCalculatorDefaults(
-  calculator: Calculator,
-  categoryName: string,
-  locale: Locale,
-): Pick<
-  Calculator,
-  "contentSummary" | "whatIs" | "formulaExplanation" | "howToSteps" | "example" | "useCases" | "faq"
-> {
-  const fallbackBuilder = calculatorLocaleFallbackBuilders[locale];
-
-  return fallbackBuilder
-    ? fallbackBuilder(calculator, categoryName)
-    : {
-        contentSummary: calculator.contentSummary,
-        whatIs: calculator.whatIs,
-        formulaExplanation: calculator.formulaExplanation,
-        howToSteps: calculator.howToSteps,
-        example: calculator.example,
-        useCases: calculator.useCases,
-        faq: calculator.faq,
-      };
-}
-
-const calculatorLocaleFallbackBuilders: Partial<
-  Record<
-    Locale,
-    (
-      calculator: Calculator,
-      categoryName: string,
-    ) => Pick<
-      Calculator,
-      "contentSummary" | "whatIs" | "formulaExplanation" | "howToSteps" | "example" | "useCases" | "faq"
-    >
-  >
-> = {
-  es: (calculator, categoryName) => ({
-    contentSummary: `${calculator.name} ayuda a los usuarios de DTECALC a ${calculator.description.charAt(0).toLowerCase()}${calculator.description.slice(1)}`,
-    whatIs: `${calculator.name} es una calculadora gratuita de ${categoryName.toLowerCase()} para quienes necesitan resolver una pregunta numerica comun de forma rapida y clara. Combina el widget, la formula, un ejemplo, casos de uso y preguntas frecuentes para que la pagina sirva tanto para respuestas rapidas como para entender mejor el resultado.`,
-    formulaExplanation: `La formula principal de esta herramienta es: ${calculator.formula}. Usa esta explicacion para entender que entrada cambia el resultado, por que sube o baja la salida y que supuestos pueden afectar el calculo.`,
-    howToSteps: [
-      "Introduce los valores requeridos en los campos de la calculadora.",
-      "Comprueba que las unidades, fechas, tasas o cantidades coincidan con tu caso.",
-      "Revisa el resultado junto con la explicacion de la formula.",
-      `Compara calculadoras relacionadas cuando tu pregunta abarque ${categoryName.toLowerCase()} u otros temas conectados.`,
-    ],
-    example: `Por ejemplo, usa ${calculator.name} para probar un escenario realista antes de cambiar importe, tasa, periodo o medida. Comparar dos o tres escenarios suele ser mas util que confiar en un solo resultado.`,
-    useCases: [
-      `Estimar un resultado de ${categoryName.toLowerCase()} antes de tomar una decision.`,
-      "Comparar dos escenarios con entradas diferentes.",
-      "Entender la formula detras del resultado en lugar de tratarlo como una caja negra.",
-    ],
-    faq: buildLocalizedFaq(
-      calculator.name,
-      categoryName.toLowerCase(),
-      "es",
-    ),
-  }),
-  "pt-BR": (calculator, categoryName) => ({
-    contentSummary: `${calculator.name} ajuda os usuarios da DTECALC a ${calculator.description.charAt(0).toLowerCase()}${calculator.description.slice(1)}`,
-    whatIs: `${calculator.name} e uma calculadora gratuita de ${categoryName.toLowerCase()} para quem precisa resolver uma pergunta numerica comum com rapidez e clareza. A pagina combina widget, formula, exemplo, casos de uso e perguntas frequentes para servir tanto para respostas rapidas quanto para melhor entendimento do resultado.`,
-    formulaExplanation: `A formula principal desta ferramenta e: ${calculator.formula}. Use esta explicacao para entender qual entrada altera o resultado, por que a saida sobe ou desce e quais premissas podem afetar o calculo.`,
-    howToSteps: [
-      "Informe os valores necessarios nos campos da calculadora.",
-      "Confira se unidades, datas, taxas ou valores correspondem ao seu caso.",
-      "Revise o resultado junto com a explicacao da formula.",
-      `Compare calculadoras relacionadas quando a sua pergunta envolver ${categoryName.toLowerCase()} ou temas proximos.`,
-    ],
-    example: `Por exemplo, use ${calculator.name} para testar um cenario realista antes de alterar valor, taxa, periodo ou medida. Comparar dois ou tres cenarios costuma ser mais util do que confiar em um unico resultado.`,
-    useCases: [
-      `Estimar um resultado de ${categoryName.toLowerCase()} antes de tomar uma decisao.`,
-      "Comparar dois cenarios com entradas diferentes.",
-      "Entender a formula por tras do resultado em vez de tratar a saida como uma caixa-preta.",
-    ],
-    faq: buildLocalizedFaq(
-      calculator.name,
-      categoryName.toLowerCase(),
-      "pt-BR",
-    ),
-  }),
-  id: (calculator, categoryName) => ({
-    contentSummary: `${calculator.name} membantu pengguna DTECALC untuk ${calculator.description.charAt(0).toLowerCase()}${calculator.description.slice(1)}`,
-    whatIs: `${calculator.name} adalah kalkulator ${categoryName.toLowerCase()} gratis untuk orang yang membutuhkan cara cepat dan jelas untuk menjawab pertanyaan angka yang umum. Halaman ini menggabungkan widget kalkulator, rumus, contoh, penggunaan umum, dan FAQ agar bermanfaat untuk jawaban cepat maupun pemahaman yang lebih baik.`,
-    formulaExplanation: `Rumus utama alat ini adalah: ${calculator.formula}. Gunakan penjelasan ini untuk memahami input mana yang mengubah hasil, mengapa output naik atau turun, dan asumsi apa yang dapat memengaruhi perhitungan.`,
-    howToSteps: [
-      "Masukkan nilai yang diperlukan ke dalam kolom kalkulator.",
-      "Pastikan satuan, tanggal, tarif, atau jumlah sesuai dengan situasi Anda.",
-      "Tinjau hasil bersama penjelasan rumus.",
-      `Bandingkan kalkulator terkait saat pertanyaan Anda melibatkan ${categoryName.toLowerCase()} atau topik lain yang berhubungan.`,
-    ],
-    example: `Sebagai contoh, gunakan ${calculator.name} untuk menguji satu skenario yang realistis sebelum mengubah jumlah, tarif, periode, atau ukuran. Membandingkan dua atau tiga skenario biasanya lebih berguna daripada hanya mengandalkan satu hasil.`,
-    useCases: [
-      `Memperkirakan hasil ${categoryName.toLowerCase()} sebelum mengambil keputusan.`,
-      "Membandingkan dua skenario dengan input yang berbeda.",
-      "Memahami rumus di balik hasil alih-alih memperlakukan output sebagai kotak hitam.",
-    ],
-    faq: buildLocalizedFaq(
-      calculator.name,
-      categoryName.toLowerCase(),
-      "id",
-    ),
-  }),
-  "zh-CN": (calculator, categoryName) => ({
-    contentSummary: `${calculator.name}鍙互甯姪 DTECALC 鐢ㄦ埛${calculator.description}`,
-    whatIs: `${calculator.name}鏄竴娆惧厤璐圭殑${categoryName}宸ュ叿锛岄€傚悎闇€瑕佸揩閫熴€佹竻鏅板湴瑙ｅ喅甯歌鏁板瓧闂鐨勭敤鎴枫€傛湰椤靛悓鏃舵彁渚涜绠楀櫒缁勪欢銆佸叕寮忋€佺ず渚嬨€佸簲鐢ㄥ満鏅拰甯歌闂锛屾棦閫傚悎蹇€熷緱鍒扮瓟妗堬紝涔熸湁鍔╀簬鐞嗚В缁撴灉鑳屽悗鐨勯€昏緫銆俙,
-    formulaExplanation: `杩欎釜宸ュ叿鐨勬牳蹇冨叕寮忔槸锛?{calculator.formula}銆備綘鍙互缁撳悎鏈妭鐞嗚В鍝釜杈撳叆浼氭敼鍙樼粨鏋溿€佷负浠€涔堢粨鏋滀細涓婁笅娉㈠姩锛屼互鍙婂摢浜涘墠鎻愭潯浠跺彲鑳藉奖鍝嶈绠椼€俙,
-    howToSteps: [
-      "鍦ㄨ绠楀櫒瀛楁涓緭鍏ユ墍闇€鏁板€笺€?,
-      "纭鍗曚綅銆佹棩鏈熴€佸埄鐜囨垨閲戦涓庡疄闄呭満鏅竴鑷淬€?,
-      "缁撳悎鍏紡璇存槑鏌ョ湅璁＄畻缁撴灉銆?,
-      `褰撲綘鐨勯棶棰樺悓鏃舵秹鍙?{categoryName}鎴栫浉鍏充富棰樻椂锛屽彲浠ョ户缁瘮杈冪浉鍏宠绠楀櫒銆俙,
-    ],
-    example: `渚嬪锛屼綘鍙互鍏堢敤${calculator.name}娴嬭瘯涓€缁勮创杩戠幇瀹炵殑杈撳叆锛屽啀淇敼閲戦銆佸埄鐜囥€佹椂闂存垨鍗曚綅杩涜瀵规瘮銆備笌鍙湅鍗曚竴缁撴灉鐩告瘮锛屾瘮杈冧袱鍒颁笁涓満鏅€氬父鏇存湁鍙傝€冧环鍊笺€俙,
-    useCases: [
-      `鍦ㄥ仛鍐冲畾鍓嶅厛浼扮畻涓€涓?{categoryName}缁撴灉銆俙,
-      "姣旇緝涓ょ涓嶅悓杈撳叆鏉′欢涓嬬殑缁撴灉宸紓銆?,
-      "鐞嗚В缁撴灉鑳屽悗鐨勫叕寮忥紝鑰屼笉鏄妸杈撳嚭褰撴垚榛戠洅銆?,
-    ],
-    faq: buildLocalizedFaq(calculator.name, categoryName, "zh-CN"),
-  }),
-  "zh-TW": (calculator, categoryName) => ({
-    contentSummary: `${calculator.name}鍙互骞姪 DTECALC 浣跨敤鑰?{calculator.description}`,
-    whatIs: `${calculator.name}鏄竴娆惧厤璨荤殑${categoryName}宸ュ叿锛岄仼鍚堥渶瑕佸揩閫熴€佹竻妤氬湴铏曠悊甯歌鏁稿瓧鍟忛鐨勪娇鐢ㄨ€呫€傛湰闋佸悓鏅傛彁渚涜▓绠楀櫒鍏冧欢銆佸叕寮忋€佺瘎渚嬨€佷娇鐢ㄦ儏澧冭垏甯歌鍟忛锛屾棦鑳藉公鍔╀綘蹇€熷緱鍒扮瓟妗堬紝涔熻兘鐞嗚В绲愭灉鑳屽緦鐨勯倧杓€俙,
-    formulaExplanation: `閫欏€嬪伐鍏风殑鏍稿績鍏紡鏄細${calculator.formula}銆備綘鍙互閫忛亷鏈瘈浜嗚В鍝€嬭几鍏ユ渻鏀硅畩绲愭灉銆佺偤浠€楹艰几鍑烘渻涓婂崌鎴栦笅闄嶏紝浠ュ強鍝簺鍓嶆彁鍋囪ō鍙兘褰遍熆瑷堢畻銆俙,
-    howToSteps: [
-      "鍦ㄨ▓绠楀櫒娆勪綅涓几鍏ユ墍闇€鏁稿€笺€?,
-      "纰鸿獚鍠綅銆佹棩鏈熴€佸埄鐜囨垨閲戦鑸囧闅涙儏澧冧竴鑷淬€?,
-      "鎼厤鍏紡瑾槑涓€璧锋煡鐪嬬祼鏋溿€?,
-      `鐣朵綘鐨勫晱椤屽悓鏅傛秹鍙?{categoryName}鎴栫浉杩戜富椤屾檪锛屽彲浠ョ辜绾屾瘮杓冪浉闂滆▓绠楀櫒銆俙,
-    ],
-    example: `渚嬪锛屼綘鍙互鍏堢敤${calculator.name}娓│涓€绲勮布杩戠従瀵︾殑杓稿叆锛屽啀淇敼閲戦銆佸埄鐜囥€佹檪闁撴垨鍠綅閫茶姣旇純銆傜浉杓冩柤鍙湅鍠竴绲愭灉锛屾瘮杓冨叐鍒颁笁鍊嬫儏澧冮€氬父鏇存湁鍙冭€冨児鍊笺€俙,
-    useCases: [
-      `鍦ㄥ仛姹哄畾鍓嶅厛浼扮畻涓€鍊?{categoryName}绲愭灉銆俙,
-      "姣旇純鍏╃祫涓嶅悓杓稿叆姊濅欢涓嬬殑绲愭灉宸暟銆?,
-      "鐞嗚В绲愭灉鑳屽緦鐨勫叕寮忥紝鑰屼笉鏄妸杓稿嚭鐣舵垚榛戠洅銆?,
-    ],
-    faq: buildLocalizedFaq(calculator.name, categoryName, "zh-TW"),
-  }),
-};
-
-function buildLocalizedFaq(
+function buildCalculatorFaq(
   calculatorName: string,
   categoryName: string,
-  locale: Exclude<Locale, "en">,
 ): readonly FaqItem[] {
-  switch (locale) {
-    case "es":
-      return [
-        {
-          question: `驴${calculatorName} es gratis?`,
-          answer: `Si. ${calculatorName} forma parte de la biblioteca gratuita de calculadoras de DTECALC.`,
-        },
-        {
-          question: `驴Que informacion necesito para ${calculatorName}?`,
-          answer: `Introduce los datos solicitados en la pagina y revisa la formula, el ejemplo y las calculadoras relacionadas de ${categoryName}.`,
-        },
-        {
-          question: `驴Puedo usar ${calculatorName} en movil?`,
-          answer: "Si. Las calculadoras de DTECALC estan pensadas para navegadores de escritorio, tablet y movil.",
-        },
-      ];
-    case "pt-BR":
-      return [
-        {
-          question: `${calculatorName} e gratis?`,
-          answer: `Sim. ${calculatorName} faz parte da biblioteca gratuita de calculadoras da DTECALC.`,
-        },
-        {
-          question: `Que informacoes preciso para usar ${calculatorName}?`,
-          answer: `Informe os dados pedidos na pagina e revise a formula, o exemplo e as calculadoras relacionadas de ${categoryName}.`,
-        },
-        {
-          question: `Posso usar ${calculatorName} no celular?`,
-          answer: "Sim. As calculadoras da DTECALC foram pensadas para navegadores em desktop, tablet e celular.",
-        },
-      ];
-    case "id":
-      return [
-        {
-          question: `Apakah ${calculatorName} gratis digunakan?`,
-          answer: `Ya. ${calculatorName} adalah bagian dari pustaka kalkulator gratis DTECALC.`,
-        },
-        {
-          question: `Informasi apa yang saya perlukan untuk ${calculatorName}?`,
-          answer: `Masukkan input yang diminta di halaman, lalu tinjau rumus, contoh, dan kalkulator ${categoryName} terkait.`,
-        },
-        {
-          question: `Apakah ${calculatorName} bisa digunakan di ponsel?`,
-          answer: "Ya. Kalkulator DTECALC dirancang untuk browser desktop, tablet, dan ponsel.",
-        },
-      ];
-    case "zh-CN":
-      return [
-        {
-          question: `${calculatorName}鏄厤璐圭殑鍚楋紵`,
-          answer: `鏄殑銆?{calculatorName}灞炰簬 DTECALC 鍏嶈垂璁＄畻鍣ㄥ伐鍏峰簱鐨勪竴閮ㄥ垎銆俙,
-        },
-        {
-          question: `浣跨敤${calculatorName}闇€瑕佸噯澶囧摢浜涗俊鎭紵`,
-          answer: `杈撳叆椤甸潰瑕佹眰鐨勬暟鍊煎悗锛屼綘杩樺彲浠ョ户缁煡鐪嬪叕寮忚鏄庛€佺ず渚嬩互鍙婄浉鍏?{categoryName}宸ュ叿銆俙,
-        },
-        {
-          question: `${calculatorName}鍙互鍦ㄦ墜鏈轰笂浣跨敤鍚楋紵`,
-          answer: "鍙互銆侱TECALC 璁＄畻鍣ㄥ凡閽堝妗岄潰銆佸钩鏉垮拰鎵嬫満娴忚鍣ㄨ繘琛屼簡閫傞厤銆?,
-        },
-      ];
-    case "zh-TW":
-      return [
-        {
-          question: `${calculatorName}鏄厤璨荤殑鍡庯紵`,
-          answer: `鏄殑銆?{calculatorName}灞柤 DTECALC 鍏嶈不瑷堢畻鍣ㄥ伐鍏峰韩鐨勪竴閮ㄥ垎銆俙,
-        },
-        {
-          question: `浣跨敤${calculatorName}闇€瑕佹簴鍌欏摢浜涜硣瑷婏紵`,
-          answer: `杓稿叆闋侀潰瑕佹眰鐨勬暩鍊煎緦锛屼綘涔熷彲浠ョ辜绾屾煡鐪嬪叕寮忚鏄庛€佺瘎渚嬩互鍙婄浉闂?{categoryName}宸ュ叿銆俙,
-        },
-        {
-          question: `${calculatorName}鍙互鍦ㄦ墜姗熶笂浣跨敤鍡庯紵`,
-          answer: "鍙互銆侱TECALC 瑷堢畻鍣ㄥ凡閲濆皪妗岄潰銆佸钩鏉胯垏鎵嬫鐎忚鍣ㄥ仛閬庨仼閰嶃€?,
-        },
-      ];
-  }
+  return [
+    {
+      question: `Is ${calculatorName} free to use?`,
+      answer: `Yes. ${calculatorName} is part of the free DTECALC calculator library.`,
+    },
+    {
+      question: `What information do I need for ${calculatorName}?`,
+      answer: `Enter the values requested by the calculator and make sure the units, rates, dates, or amounts match your ${categoryName.toLowerCase()} scenario.`,
+    },
+    {
+      question: `Should I rely on one result only?`,
+      answer: "Usually no. It is better to compare a few scenarios and verify assumptions before using the result for an important decision.",
+    },
+  ];
 }
 
-function translateBlogPost(post: BlogPost, locale: Locale): BlogPost {
-  const translation = contentTranslations[locale]?.blogPosts?.[post.slug];
+function buildRelatedCalculatorSlugs(
+  slug: CalculatorSlug,
+  categorySlug: CategorySlug,
+): readonly CalculatorSlug[] {
+  const sameCategory = Object.entries(CALCULATOR_CATEGORY_MAP)
+    .filter(([candidateSlug, candidateCategory]) => {
+      return candidateSlug !== slug && candidateCategory === categorySlug;
+    })
+    .map(([candidateSlug]) => candidateSlug as CalculatorSlug)
+    .slice(0, 3);
 
-  if (!translation) {
-    return post;
+  return sameCategory;
+}
+
+function buildCalculationMethod(
+  calculatorName: string,
+  categoryName: string,
+): string {
+  return `${calculatorName} uses structured inputs and calculator-specific formulas to estimate a ${categoryName.toLowerCase()} result. Outputs should be interpreted together with your assumptions, data quality, and any fees, taxes, or external constraints that apply.`;
+}
+
+function isFeaturedCalculator(slug: CalculatorSlug): boolean {
+  return [
+    "loan-calculator",
+    "mortgage-calculator",
+    "compound-interest-calculator",
+    "bmi-calculator",
+    "calories-calculator",
+    "percentage-calculator",
+    "profit-calculator",
+    "openai-cost-calculator",
+    "llm-cost-calculator",
+  ].includes(slug);
+}
+
+function inferRelatedCalculatorsForBlog(
+  slug: BlogPostSlug,
+): readonly CalculatorSlug[] {
+  const matches = new Set<CalculatorSlug>();
+
+  for (const rule of BLOG_CALCULATOR_RULES) {
+    if (rule.match.some((term) => slug.includes(term))) {
+      for (const calculatorSlug of rule.calculators) {
+        matches.add(calculatorSlug);
+      }
+    }
   }
 
-  return {
-    ...post,
-    ...translation,
-    sections: translation.sections
-      ? post.sections?.map((section, index) => ({
-          ...section,
-          ...translation.sections?.[index],
-        }))
-      : post.sections,
-  };
+  if (matches.size > 0) {
+    return [...matches].slice(0, 3);
+  }
+
+  const categorySlug = inferCategoryFromBlogSlug(slug);
+  return CATEGORY_BLOG_FALLBACK[categorySlug];
 }
 
-export async function getAllCategories(): Promise<readonly Category[]> {
-  return dbGetAllCategories();
+function inferCategoryForBlog(
+  slug: BlogPostSlug,
+  relatedCalculatorSlugs: readonly CalculatorSlug[],
+): CategorySlug {
+  const firstRelated = relatedCalculatorSlugs[0];
+  if (firstRelated) {
+    return CALCULATOR_CATEGORY_MAP[firstRelated];
+  }
+
+  return inferCategoryFromBlogSlug(slug);
 }
 
-export async function getAllCategoriesByLocale(locale: Locale): Promise<readonly Category[]> {
-  const categories = await dbGetAllCategories();
-  return locale === DEFAULT_LOCALE
-    ? categories
-    : categories.map((category) => translateCategory(category, locale));
+function inferCategoryFromBlogSlug(slug: BlogPostSlug): CategorySlug {
+  if (
+    containsAny(slug, [
+      "bmi",
+      "bmr",
+      "calorie",
+      "body-fat",
+      "water",
+      "hydration",
+      "weight",
+      "protein",
+      "macro",
+      "exercise",
+      "walking",
+      "activity-level",
+      "tdee",
+    ])
+  ) {
+    return "health";
+  }
+
+  if (
+    containsAny(slug, [
+      "openai",
+      "claude",
+      "token",
+      "llm",
+      "gpu",
+      "rag",
+      "embedding",
+      "image-generation",
+      "translation-cost",
+      "agent-cost",
+      "meeting-notes",
+      "batch-processing",
+      "cached-token",
+      "multimodal",
+      "fine-tuning",
+      "evaluation",
+      "routing",
+      "app-margin",
+      "ai-",
+    ])
+  ) {
+    return "ai";
+  }
+
+  if (
+    containsAny(slug, [
+      "conversion-rate",
+      "checkout-conversion",
+      "trial-to-paid",
+      "activation-rate",
+      "referral-conversion-rate",
+      "email-conversion-rate",
+      "form-completion-rate",
+      "pipeline-coverage",
+      "churn-impact",
+      "lead-value",
+      "cpc-to-cpa",
+      "cpa-calculator",
+      "cpl-calculator",
+      "funnel-conversion",
+      "landing-page-lift",
+      "burn-rate",
+      "runway",
+      "subscription-burn",
+      "invoice-late-fee",
+      "cash-conversion-cycle",
+    ])
+  ) {
+    return "business";
+  }
+
+  return "finance";
 }
 
-export async function getAllCalculators(): Promise<readonly Calculator[]> {
-  return dbGetAllCalculators();
+function buildBlogSections(
+  title: string,
+  slug: BlogPostSlug,
+  categorySlug: CategorySlug,
+): readonly BlogPostSection[] {
+  const categoryName = CATEGORY_METADATA[categorySlug].name;
+
+  return [
+    {
+      heading: `What ${title} Covers`,
+      body: [
+        `${title} is most useful when you want a quick, practical explanation before plugging numbers into a calculator.`,
+        `This topic sits in the ${categoryName.toLowerCase()} area, so the exact result usually depends on your assumptions, units, time horizon, or cost structure.`,
+      ],
+    },
+    {
+      heading: "How to Use the Number",
+      body: [
+        `Start with a simple base case, then change the one or two inputs that most affect the outcome for ${slugToTopic(slug)}.`,
+        "Comparing an optimistic scenario, an expected scenario, and a cautious scenario is usually more informative than trusting a single point estimate.",
+      ],
+    },
+    {
+      heading: "Important Limits and Context",
+      body: [
+        `A calculator can clarify ${slugToTopic(slug)}, but it cannot replace source documents, product pricing pages, tax rules, lender terms, or professional advice when those details matter.`,
+        "Use the result as a decision aid, then validate the assumptions that would materially change the answer.",
+      ],
+    },
+  ];
 }
 
-export async function getAllCalculatorsByLocale(locale: Locale): Promise<readonly Calculator[]> {
-  const calculators = await dbGetAllCalculators();
-  return locale === DEFAULT_LOCALE
-    ? calculators
-    : calculators.map((calculator) => translateCalculator(calculator, locale));
+function buildRelatedBlogPostSlugsByCalculator(
+  posts: readonly BlogPost[],
+): Record<CalculatorSlug, readonly BlogPostSlug[]> {
+  const map = {} as Record<CalculatorSlug, BlogPostSlug[]>;
+
+  for (const post of posts) {
+    for (const calculatorSlug of post.relatedCalculatorSlugs) {
+      if (!map[calculatorSlug]) {
+        map[calculatorSlug] = [];
+      }
+
+      if (map[calculatorSlug].length < 6) {
+        map[calculatorSlug].push(post.slug);
+      }
+    }
+  }
+
+  return map;
 }
 
-export async function getFeaturedCalculators(limit?: number): Promise<readonly Calculator[]> {
-  return dbGetFeaturedCalculators(limit);
+function slugToTitle(slug: string): string {
+  return slug
+    .split("-")
+    .map((word) => {
+      if (ACRONYM_WORDS.has(word)) {
+        return word.toUpperCase();
+      }
+
+      if (word === "vs") {
+        return "vs";
+      }
+
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
 }
 
-export async function getFeaturedCalculatorsByLocale(locale: Locale, limit?: number): Promise<readonly Calculator[]> {
-  const featured = (await getAllCalculatorsByLocale(locale)).filter((calculator) => calculator.featured);
-  return typeof limit === "number" ? featured.slice(0, limit) : featured;
+function slugToTopic(slug: string): string {
+  return slug.replace(/-/g, " ");
 }
 
-export async function getLatestCalculators(limit = 12): Promise<readonly Calculator[]> {
-  return dbGetLatestCalculators(limit);
+function toSentenceFragment(text: string): string {
+  return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
-export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {
-  return dbGetCategoryBySlug(slug);
+function containsAny(value: string, terms: readonly string[]): boolean {
+  return terms.some((term) => value.includes(term));
 }
-
-export async function getCategoryBySlugAndLocale(slug: string, locale: Locale): Promise<Category | undefined> {
-  const category = await getCategoryBySlug(slug);
-  return category ? translateCategory(category, locale) : undefined;
-}
-
-export async function getCalculatorBySlug(slug: string): Promise<Calculator | undefined> {
-  return dbGetCalculatorBySlug(slug);
-}
-
-export async function getCalculatorBySlugAndLocale(slug: string, locale: Locale): Promise<Calculator | undefined> {
-  const calculator = await getCalculatorBySlug(slug);
-  return calculator ? translateCalculator(calculator, locale) : undefined;
-}
-
-export async function getCalculatorsByCategorySlug(slug: string): Promise<readonly Calculator[]> {
-  return dbGetCalculatorsByCategorySlug(slug);
-}
-
-export async function getCalculatorsByCategorySlugAndLocale(slug: string, locale: Locale): Promise<readonly Calculator[]> {
-  const calcs = await getCalculatorsByCategorySlug(slug);
-  return calcs.map((calculator) => translateCalculator(calculator, locale));
-}
-
-export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
-  return dbGetBlogPostBySlug(slug);
-}
-
-export async function getBlogPostBySlugAndLocale(slug: string, locale: Locale): Promise<BlogPost | undefined> {
-  const post = await getBlogPostBySlug(slug);
-  return post ? translateBlogPost(post, locale) : undefined;
-}
-
-export async function getBlogPostsForCalculatorSlug(slug: string): Promise<readonly BlogPost[]> {
-  const posts = await dbGetAllBlogPosts();
-  return posts.filter((post) =>
-    (post.relatedCalculatorSlugs as readonly string[]).includes(slug),
-  );
-}
-
-export async function getBlogPostsByLocale(locale: Locale): Promise<readonly BlogPost[]> {
-  const posts = await dbGetAllBlogPosts();
-  return locale === DEFAULT_LOCALE
-    ? posts
-    : posts.map((post) => translateBlogPost(post, locale));
-}
-
-export async function getBlogPostsForCalculatorSlugAndLocale(slug: string, locale: Locale): Promise<readonly BlogPost[]> {
-  const posts = await getBlogPostsForCalculatorSlug(slug);
-  return posts.map((post) => translateBlogPost(post, locale));
-}
-
-export async function getRelatedCalculators(calculator: Calculator, limit = 4): Promise<readonly Calculator[]> {
-  const explicitRelated = await Promise.all(
-    calculator.relatedCalculatorSlugs.map((slug) => getCalculatorBySlug(slug))
-  );
-  const explicitRelatedFiltered = explicitRelated.filter((related): related is Calculator => Boolean(related));
-
-  const categoryRelated = await getCalculatorsByCategorySlug(calculator.categorySlug);
-  const filteredCategoryRelated = categoryRelated.filter((candidate) => candidate.slug !== calculator.slug);
-
-  return [...explicitRelatedFiltered, ...filteredCategoryRelated].slice(0, limit);
-}
-
-
