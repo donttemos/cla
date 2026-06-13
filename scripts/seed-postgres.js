@@ -118,7 +118,7 @@ async function seed() {
   }
   
   console.log("Loading content from data-seed.ts...");
-  const dataSeedPath = path.join(rootDir, "src", "lib", "data-seed.ts");
+  const dataSeedPath = path.join(rootDir, "scripts", "data-seed.ts");
   if (!fs.existsSync(dataSeedPath)) {
     console.error("Critical Error: src/lib/data-seed.ts not found. Ensure backup was created.");
     process.exit(1);
