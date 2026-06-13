@@ -290,6 +290,30 @@ export const categories: readonly Category[] = (
   ...metadata,
 }));
 
+export const blogPosts: readonly BlogPost[] = blogSlugs.map((slug) => {
+  const relatedCalculatorSlugs = inferRelatedCalculatorsForBlog(slug);
+  const categorySlug = inferCategoryForBlog(slug, relatedCalculatorSlugs);
+  const title = slugToTitle(slug);
+  const sections = buildBlogSections(title, slug, categorySlug);
+
+  return {
+    id: slug,
+    slug,
+    title,
+    excerpt: `Learn the key idea behind ${title.toLowerCase()}, how to interpret the number responsibly, and which calculator can help you model real scenarios.`,
+    published: true,
+    categorySlug,
+    relatedCalculatorSlugs,
+    sections,
+    seoTitle: `${title} - Guide, Examples, and Calculator`,
+    seoDescription: `Read a practical guide to ${title.toLowerCase()}, including examples, assumptions, and related calculators for deeper analysis.`,
+  };
+});
+
+const relatedBlogPostSlugsByCalculator = buildRelatedBlogPostSlugsByCalculator(
+  blogPosts,
+);
+
 export const calculators: readonly Calculator[] = calculatorConfigs.map((config) => {
   const slug = config.slug as CalculatorSlug;
   const categorySlug = CALCULATOR_CATEGORY_MAP[slug];
@@ -331,7 +355,7 @@ export const calculators: readonly Calculator[] = calculatorConfigs.map((config)
     faq: buildCalculatorFaq(config.title, categoryName),
     featured: isFeaturedCalculator(slug),
     relatedCalculatorSlugs,
-    relatedBlogPostSlugs: [],
+    relatedBlogPostSlugs: relatedBlogPostSlugsByCalculator[slug] ?? [],
     seoTitle: `${config.title} - Free Online Calculator`,
     seoDescription:
       config.description ??
@@ -342,34 +366,6 @@ export const calculators: readonly Calculator[] = calculatorConfigs.map((config)
     versionHistory: DEFAULT_VERSION_HISTORY,
   };
 });
-
-export const blogPosts: readonly BlogPost[] = blogSlugs.map((slug) => {
-  const relatedCalculatorSlugs = inferRelatedCalculatorsForBlog(slug);
-  const categorySlug = inferCategoryForBlog(slug, relatedCalculatorSlugs);
-  const title = slugToTitle(slug);
-  const sections = buildBlogSections(title, slug, categorySlug);
-
-  return {
-    id: slug,
-    slug,
-    title,
-    excerpt: `Learn the key idea behind ${title.toLowerCase()}, how to interpret the number responsibly, and which calculator can help you model real scenarios.`,
-    published: true,
-    categorySlug,
-    relatedCalculatorSlugs,
-    sections,
-    seoTitle: `${title} - Guide, Examples, and Calculator`,
-    seoDescription: `Read a practical guide to ${title.toLowerCase()}, including examples, assumptions, and related calculators for deeper analysis.`,
-  };
-});
-
-const relatedBlogPostSlugsByCalculator = buildRelatedBlogPostSlugsByCalculator(
-  blogPosts,
-);
-
-for (const calculator of calculators as Calculator[]) {
-  calculator.relatedBlogPostSlugs = relatedBlogPostSlugsByCalculator[calculator.slug] ?? [];
-}
 
 function buildCalculatorFaq(
   calculatorName: string,

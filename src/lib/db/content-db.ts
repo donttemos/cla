@@ -1,71 +1,101 @@
 import { sql, mapPostgresRow } from "./postgres";
 import type { Category, Calculator, BlogPost } from "@/types/content";
 import type { ComparisonPage, FormulaPage, ExamplePage } from "@/types/seo-centers";
+import {
+  categories as seededCategories,
+  calculators as seededCalculators,
+  blogPosts as seededBlogPosts,
+} from "../../../scripts/data-seed";
 
 async function queryRows<T>(query: TemplateStringsArray, ...values: unknown[]): Promise<T[]> {
   if (!sql) {
     return [];
   }
 
-  const rows = await sql(query, ...values);
-  return rows as T[];
+  try {
+    const rows = await sql(query, ...values);
+    return rows as T[];
+  } catch (error) {
+    console.error("Postgres query failed, falling back to static content.", error);
+    return [];
+  }
 }
 
 // --- Categories ---
 
 export async function dbGetAllCategories(): Promise<readonly Category[]> {
   const rows = await queryRows<Record<string, unknown>>`SELECT * FROM categories`;
-  return rows.map(row => mapPostgresRow<Category>(row));
+  return rows.length > 0
+    ? rows.map(row => mapPostgresRow<Category>(row))
+    : seededCategories;
 }
 
 export async function dbGetCategoryBySlug(slug: string): Promise<Category | undefined> {
   const rows = await queryRows<Record<string, unknown>>`SELECT * FROM categories WHERE slug = ${slug} LIMIT 1`;
-  return rows[0] ? mapPostgresRow<Category>(rows[0]) : undefined;
+  return rows[0]
+    ? mapPostgresRow<Category>(rows[0])
+    : seededCategories.find((category) => category.slug === slug);
 }
 
 // --- Calculators ---
 
 export async function dbGetAllCalculators(): Promise<readonly Calculator[]> {
   const rows = await queryRows<Record<string, unknown>>`SELECT * FROM calculators`;
-  return rows.map(row => mapPostgresRow<Calculator>(row));
+  return rows.length > 0
+    ? rows.map(row => mapPostgresRow<Calculator>(row))
+    : seededCalculators;
 }
 
 export async function dbGetCalculatorBySlug(slug: string): Promise<Calculator | undefined> {
   const rows = await queryRows<Record<string, unknown>>`SELECT * FROM calculators WHERE slug = ${slug} LIMIT 1`;
-  return rows[0] ? mapPostgresRow<Calculator>(rows[0]) : undefined;
+  return rows[0]
+    ? mapPostgresRow<Calculator>(rows[0])
+    : seededCalculators.find((calculator) => calculator.slug === slug);
 }
 
 export async function dbGetCalculatorsByCategorySlug(categorySlug: string): Promise<readonly Calculator[]> {
   const rows = await queryRows<Record<string, unknown>>`SELECT * FROM calculators WHERE category_slug = ${categorySlug}`;
-  return rows.map(row => mapPostgresRow<Calculator>(row));
+  return rows.length > 0
+    ? rows.map(row => mapPostgresRow<Calculator>(row))
+    : seededCalculators.filter((calculator) => calculator.categorySlug === categorySlug);
 }
 
 export async function dbGetFeaturedCalculators(limit: number = 6): Promise<readonly Calculator[]> {
   const rows = await queryRows<Record<string, unknown>>`SELECT * FROM calculators WHERE featured = true LIMIT ${limit}`;
-  return rows.map(row => mapPostgresRow<Calculator>(row));
+  return rows.length > 0
+    ? rows.map(row => mapPostgresRow<Calculator>(row))
+    : seededCalculators.filter((calculator) => calculator.featured).slice(0, limit);
 }
 
 export async function dbGetLatestCalculators(limit: number = 6): Promise<readonly Calculator[]> {
   // Assuming ID or a date field indicates 'latest'
   const rows = await queryRows<Record<string, unknown>>`SELECT * FROM calculators ORDER BY id DESC LIMIT ${limit}`;
-  return rows.map(row => mapPostgresRow<Calculator>(row));
+  return rows.length > 0
+    ? rows.map(row => mapPostgresRow<Calculator>(row))
+    : [...seededCalculators].slice(-limit).reverse();
 }
 
 // --- Blog Posts ---
 
 export async function dbGetAllBlogPosts(): Promise<readonly BlogPost[]> {
   const rows = await queryRows<Record<string, unknown>>`SELECT * FROM blog_posts WHERE published = true ORDER BY last_updated DESC`;
-  return rows.map(row => mapPostgresRow<BlogPost>(row));
+  return rows.length > 0
+    ? rows.map(row => mapPostgresRow<BlogPost>(row))
+    : seededBlogPosts.filter((post) => post.published);
 }
 
 export async function dbGetBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
   const rows = await queryRows<Record<string, unknown>>`SELECT * FROM blog_posts WHERE slug = ${slug} AND published = true LIMIT 1`;
-  return rows[0] ? mapPostgresRow<BlogPost>(rows[0]) : undefined;
+  return rows[0]
+    ? mapPostgresRow<BlogPost>(rows[0])
+    : seededBlogPosts.find((post) => post.slug === slug && post.published);
 }
 
 export async function dbGetBlogPostsByCategorySlug(categorySlug: string): Promise<readonly BlogPost[]> {
   const rows = await queryRows<Record<string, unknown>>`SELECT * FROM blog_posts WHERE category_slug = ${categorySlug} AND published = true ORDER BY last_updated DESC`;
-  return rows.map(row => mapPostgresRow<BlogPost>(row));
+  return rows.length > 0
+    ? rows.map(row => mapPostgresRow<BlogPost>(row))
+    : seededBlogPosts.filter((post) => post.categorySlug === categorySlug && post.published);
 }
 
 // --- SEO Centers ---
