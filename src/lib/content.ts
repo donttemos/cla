@@ -5,15 +5,11 @@ import type {
   Category,
   FaqItem,
 } from "@/types/content";
+import { cache } from "react";
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 import type {
   ContentTranslations,
 } from "@/lib/i18n/content/types";
-import { spanishContentTranslations } from "@/lib/i18n/content/es";
-import { indonesianContentTranslations } from "@/lib/i18n/content/id";
-import { portugueseBrazilContentTranslations } from "@/lib/i18n/content/pt-BR";
-import { simplifiedChineseContentTranslations } from "@/lib/i18n/content/zh-CN";
-import { traditionalChineseContentTranslations } from "@/lib/i18n/content/zh-TW";
 
 export const SITE_NAME = "DTECALC";
 export const SITE_TAGLINE = "500+ Free Online Calculators";
@@ -31,17 +27,33 @@ import {
   dbGetBlogPostBySlug,
 } from "./db/content-db";
 
-const contentTranslations: Record<Locale, ContentTranslations> = {
-  en: { categories: {}, calculators: {}, blogPosts: {} },
-  es: spanishContentTranslations,
-  id: indonesianContentTranslations,
-  "pt-BR": portugueseBrazilContentTranslations,
-  "zh-CN": simplifiedChineseContentTranslations,
-  "zh-TW": traditionalChineseContentTranslations,
+const emptyTranslations: ContentTranslations = {
+  categories: {},
+  calculators: {},
+  blogPosts: {},
 };
 
-function translateCategory(category: Category, locale: Locale): Category {
-  const translation = contentTranslations[locale]?.categories?.[category.slug];
+const getContentTranslations = cache(async (locale: Locale): Promise<ContentTranslations> => {
+  switch (locale) {
+    case "en":
+      return emptyTranslations;
+    case "es":
+      return (await import("@/lib/i18n/content/es")).spanishContentTranslations;
+    case "id":
+      return (await import("@/lib/i18n/content/id")).indonesianContentTranslations;
+    case "pt-BR":
+      return (await import("@/lib/i18n/content/pt-BR")).portugueseBrazilContentTranslations;
+    case "zh-CN":
+      return (await import("@/lib/i18n/content/zh-CN")).simplifiedChineseContentTranslations;
+    case "zh-TW":
+      return (await import("@/lib/i18n/content/zh-TW")).traditionalChineseContentTranslations;
+    default:
+      return emptyTranslations;
+  }
+});
+
+function translateCategory(category: Category, translations: ContentTranslations): Category {
+  const translation = translations.categories?.[category.slug];
 
   return translation
     ? {
@@ -52,8 +64,12 @@ function translateCategory(category: Category, locale: Locale): Category {
     : category;
 }
 
-function translateCalculator(calculator: Calculator, locale: Locale): Calculator {
-  const translation = contentTranslations[locale]?.calculators?.[calculator.slug];
+function translateCalculator(
+  calculator: Calculator,
+  translations: ContentTranslations,
+  locale: Locale,
+): Calculator {
+  const translation = translations.calculators?.[calculator.slug];
   const categoryName = (calculator as unknown as Record<string, unknown>).categoryName as string || "online";
 
   const localizedDefaults = buildLocalizedCalculatorDefaults(
@@ -301,8 +317,8 @@ function buildLocalizedFaq(
   }
 }
 
-function translateBlogPost(post: BlogPost, locale: Locale): BlogPost {
-  const translation = contentTranslations[locale]?.blogPosts?.[post.slug];
+function translateBlogPost(post: BlogPost, translations: ContentTranslations): BlogPost {
+  const translation = translations.blogPosts?.[post.slug];
 
   if (!translation) {
     return post;
@@ -326,9 +342,12 @@ export async function getAllCategories(): Promise<readonly Category[]> {
 
 export async function getAllCategoriesByLocale(locale: Locale): Promise<readonly Category[]> {
   const categories = await dbGetAllCategories();
-  return locale === DEFAULT_LOCALE
-    ? categories
-    : categories.map((category) => translateCategory(category, locale));
+  if (locale === DEFAULT_LOCALE) {
+    return categories;
+  }
+
+  const translations = await getContentTranslations(locale);
+  return categories.map((category) => translateCategory(category, translations));
 }
 
 export async function getAllCalculators(): Promise<readonly Calculator[]> {
@@ -337,9 +356,12 @@ export async function getAllCalculators(): Promise<readonly Calculator[]> {
 
 export async function getAllCalculatorsByLocale(locale: Locale): Promise<readonly Calculator[]> {
   const calculators = await dbGetAllCalculators();
-  return locale === DEFAULT_LOCALE
-    ? calculators
-    : calculators.map((calculator) => translateCalculator(calculator, locale));
+  if (locale === DEFAULT_LOCALE) {
+    return calculators;
+  }
+
+  const translations = await getContentTranslations(locale);
+  return calculators.map((calculator) => translateCalculator(calculator, translations, locale));
 }
 
 export async function getFeaturedCalculators(limit?: number): Promise<readonly Calculator[]> {
@@ -361,7 +383,16 @@ export async function getCategoryBySlug(slug: string): Promise<Category | undefi
 
 export async function getCategoryBySlugAndLocale(slug: string, locale: Locale): Promise<Category | undefined> {
   const category = await getCategoryBySlug(slug);
-  return category ? translateCategory(category, locale) : undefined;
+  if (!category) {
+    return undefined;
+  }
+
+  if (locale === DEFAULT_LOCALE) {
+    return category;
+  }
+
+  const translations = await getContentTranslations(locale);
+  return translateCategory(category, translations);
 }
 
 export async function getCalculatorBySlug(slug: string): Promise<Calculator | undefined> {
@@ -370,7 +401,16 @@ export async function getCalculatorBySlug(slug: string): Promise<Calculator | un
 
 export async function getCalculatorBySlugAndLocale(slug: string, locale: Locale): Promise<Calculator | undefined> {
   const calculator = await getCalculatorBySlug(slug);
-  return calculator ? translateCalculator(calculator, locale) : undefined;
+  if (!calculator) {
+    return undefined;
+  }
+
+  if (locale === DEFAULT_LOCALE) {
+    return calculator;
+  }
+
+  const translations = await getContentTranslations(locale);
+  return translateCalculator(calculator, translations, locale);
 }
 
 export async function getCalculatorsByCategorySlug(slug: string): Promise<readonly Calculator[]> {
@@ -379,7 +419,12 @@ export async function getCalculatorsByCategorySlug(slug: string): Promise<readon
 
 export async function getCalculatorsByCategorySlugAndLocale(slug: string, locale: Locale): Promise<readonly Calculator[]> {
   const calcs = await getCalculatorsByCategorySlug(slug);
-  return calcs.map((calculator) => translateCalculator(calculator, locale));
+  if (locale === DEFAULT_LOCALE) {
+    return calcs;
+  }
+
+  const translations = await getContentTranslations(locale);
+  return calcs.map((calculator) => translateCalculator(calculator, translations, locale));
 }
 
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
@@ -388,7 +433,16 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefi
 
 export async function getBlogPostBySlugAndLocale(slug: string, locale: Locale): Promise<BlogPost | undefined> {
   const post = await getBlogPostBySlug(slug);
-  return post ? translateBlogPost(post, locale) : undefined;
+  if (!post) {
+    return undefined;
+  }
+
+  if (locale === DEFAULT_LOCALE) {
+    return post;
+  }
+
+  const translations = await getContentTranslations(locale);
+  return translateBlogPost(post, translations);
 }
 
 export async function getBlogPostsForCalculatorSlug(slug: string): Promise<readonly BlogPost[]> {
@@ -400,14 +454,22 @@ export async function getBlogPostsForCalculatorSlug(slug: string): Promise<reado
 
 export async function getBlogPostsByLocale(locale: Locale): Promise<readonly BlogPost[]> {
   const posts = await dbGetAllBlogPosts();
-  return locale === DEFAULT_LOCALE
-    ? posts
-    : posts.map((post) => translateBlogPost(post, locale));
+  if (locale === DEFAULT_LOCALE) {
+    return posts;
+  }
+
+  const translations = await getContentTranslations(locale);
+  return posts.map((post) => translateBlogPost(post, translations));
 }
 
 export async function getBlogPostsForCalculatorSlugAndLocale(slug: string, locale: Locale): Promise<readonly BlogPost[]> {
   const posts = await getBlogPostsForCalculatorSlug(slug);
-  return posts.map((post) => translateBlogPost(post, locale));
+  if (locale === DEFAULT_LOCALE) {
+    return posts;
+  }
+
+  const translations = await getContentTranslations(locale);
+  return posts.map((post) => translateBlogPost(post, translations));
 }
 
 export async function getRelatedCalculators(calculator: Calculator, limit = 4): Promise<readonly Calculator[]> {

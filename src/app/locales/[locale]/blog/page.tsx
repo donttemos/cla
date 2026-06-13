@@ -57,6 +57,7 @@ export default async function LocaleBlogPage({ params }: LocalePageProps) {
                   <Link
                     key={post.slug}
                     href={`/${locale}/blog/${post.slug}`}
+                    prefetch={false}
                     className="cv-surface block p-5 transition hover:border-sky-300"
                   >
                     <h2 className="text-xl text-slate-950">{post.title}</h2>

@@ -46,6 +46,7 @@ export default async function BlogPage() {
                   <Link
                     key={post.slug}
                     href={`/blog/${post.slug}`}
+                    prefetch={false}
                     className="cv-surface block p-5 transition hover:border-sky-300"
                   >
                     <h2 className="text-xl text-slate-950">{post.title}</h2>

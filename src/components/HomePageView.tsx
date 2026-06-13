@@ -253,6 +253,7 @@ export async function HomePageView({ locale = DEFAULT_LOCALE as Locale }: { loca
               <Link
                 key={post.slug}
                 href={`/blog/${post.slug}`}
+                prefetch={false}
                 className="cv-surface group block p-8 transition-all hover:border-sky-300 hover:shadow-md"
               >
                 <h3 className="text-xl font-semibold text-zinc-950 group-hover:text-sky-700 transition-colors mb-3 leading-tight">
