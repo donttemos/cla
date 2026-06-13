@@ -112,7 +112,7 @@ async function seed() {
     const schemaSql = fs.readFileSync(schemaPath, "utf8");
     const statements = schemaSql.split(";").filter(s => s.trim().length > 0);
     for (const statement of statements) {
-      await sql(statement);
+      await sql.query(statement);
     }
     console.log("Schema verified/updated.");
   }
